@@ -1,0 +1,186 @@
+import unittest
+
+from src.wbr_runner import run_wbr
+
+
+EXPECTED_TOOLS = (
+    "weekly_revenue",
+    "weekly_orders",
+    "weekly_review_score",
+    "category_breakdown",
+    "state_breakdown",
+)
+
+
+def envelope(name, *, status="ok", data=None, refs=None, warnings=None, error=None):
+    return {
+        "tool_name": name,
+        "request_id": f"req-{name}",
+        "status": status,
+        "generated_at": "2026-10-05T00:00:00+00:00",
+        "parameters": {"week": "synthetic-current"},
+        "data": {} if data is None else data,
+        "evidence_refs": [f"athena:{name}"] if refs is None and status != "error" else (refs or []),
+        "warnings": warnings or [],
+        "error": error,
+    }
+
+
+def make_tool(name, payload):
+    return (name, lambda _params, payload=payload: payload, {"week": "synthetic-current"})
+
+
+def good_claims(_tool_results):
+    return [
+        {
+            "claim_id": "c1",
+            "question_id": "q1",
+            "statement": "Revenue declined in the current synthetic week.",
+            "claim_type": "fact",
+            "confidence": None,
+            "supporting_evidence": ["athena:weekly_revenue"],
+            "causal_language_allowed": False,
+            "requires_human_review": False,
+        }
+    ]
+
+
+class WBRRunnerTests(unittest.TestCase):
+    def all_good_tools(self):
+        return [make_tool(name, envelope(name)) for name in EXPECTED_TOOLS]
+
+    def test_complete_synthetic_path(self):
+        seen = {}
+
+        def renderer(payload):
+            seen.update(payload)
+            return "rendered"
+
+        result = run_wbr(
+            self.all_good_tools(),
+            good_claims,
+            expected_tool_names=EXPECTED_TOOLS,
+            renderer=renderer,
+        )
+        self.assertEqual(result.status, "complete")
+        self.assertEqual(result.rendered, "rendered")
+        self.assertEqual(seen["label"], "SYNTHETIC")
+
+    def test_partial_tool_result_stays_partial_and_preserves_warning(self):
+        tools = self.all_good_tools()
+        tools[2] = make_tool(
+            "weekly_review_score",
+            envelope(
+                "weekly_review_score",
+                status="partial",
+                data={"value": None},
+                warnings=["review coverage unavailable"],
+            ),
+        )
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(result.status, "partial")
+        self.assertIn("review coverage unavailable", result.warnings)
+
+    def test_empty_tools_are_partial(self):
+        result = run_wbr([], good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(result.status, "partial")
+
+    def test_incomplete_tools_are_partial(self):
+        result = run_wbr(
+            self.all_good_tools()[:-1],
+            good_claims,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("missing expected tools" in warning for warning in result.warnings))
+
+    def test_malformed_tool_retries_once_then_partial(self):
+        attempts = {"count": 0}
+
+        def malformed(_params):
+            attempts["count"] += 1
+            return {"status": "ok"}
+
+        tools = self.all_good_tools()
+        tools[0] = ("weekly_revenue", malformed, {})
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(attempts["count"], 2)
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.tool_results[0]["status"], "error")
+
+    def test_retry_success(self):
+        attempts = {"count": 0}
+
+        def flaky(_params):
+            attempts["count"] += 1
+            if attempts["count"] == 1:
+                raise TimeoutError("timeout")
+            return envelope("weekly_revenue")
+
+        tools = self.all_good_tools()
+        tools[0] = ("weekly_revenue", flaky, {})
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(attempts["count"], 2)
+        self.assertEqual(result.status, "complete")
+        self.assertTrue(any("retried once" in warning for warning in result.warnings))
+
+    def test_missing_evidence_removes_claim_and_partial(self):
+        def analyst(_results):
+            claim = good_claims(_results)[0]
+            claim["supporting_evidence"] = ["athena:not-present"]
+            return [claim]
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(len(result.removed_claims), 1)
+        self.assertEqual(result.removed_claims[0]["verifier_outcome"], "remove")
+
+    def test_malformed_analyst_response_is_partial(self):
+        result = run_wbr(
+            self.all_good_tools(),
+            lambda _results: {"not": "a claim sequence"},
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("analyst response" in warning for warning in result.warnings))
+
+    def test_bare_because_claim_is_flagged(self):
+        def analyst(_results):
+            claim = good_claims(_results)[0]
+            claim["statement"] = "Revenue fell because reviews fell."
+            return [claim]
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
+
+    def test_error_tool_retry_exhaustion_preserves_failure(self):
+        attempts = {"count": 0}
+
+        def failing(_params):
+            attempts["count"] += 1
+            return envelope(
+                "weekly_review_score",
+                status="error",
+                refs=[],
+                error="Athena unavailable",
+            )
+
+        tools = self.all_good_tools()
+        tools[2] = ("weekly_review_score", failing, {})
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(attempts["count"], 2)
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.tool_results[2]["error"], "Athena unavailable")
+
+
+if __name__ == "__main__":
+    unittest.main()
