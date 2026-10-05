@@ -1,0 +1,316 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Callable, Iterable, Mapping, Optional, Sequence
+
+from .wbr_contract import ContractError, guard_noncausal
+
+
+VALID_TOOL_STATUSES = {"ok", "partial", "error"}
+VALID_CLAIM_TYPES = {"fact", "observed_pattern", "unexplained"}
+VALID_OUTCOMES = {"keep", "downgrade", "flag", "remove"}
+
+
+@dataclass(frozen=True)
+class RunResult:
+    status: str
+    tool_results: tuple[dict[str, Any], ...]
+    claims: tuple[dict[str, Any], ...]
+    removed_claims: tuple[dict[str, Any], ...]
+    warnings: tuple[str, ...]
+    renderer_input: dict[str, Any]
+    rendered: Any = None
+
+
+def _require_keys(payload: Mapping[str, Any], keys: Iterable[str], label: str) -> None:
+    missing = [key for key in keys if key not in payload]
+    if missing:
+        raise ContractError(f"{label} missing required keys: {', '.join(missing)}")
+
+
+def validate_tool_envelope(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, Mapping):
+        raise ContractError("tool result must be a mapping")
+    _require_keys(
+        payload,
+        (
+            "tool_name",
+            "request_id",
+            "status",
+            "generated_at",
+            "parameters",
+            "data",
+            "evidence_refs",
+            "warnings",
+            "error",
+        ),
+        "tool envelope",
+    )
+
+    result = dict(payload)
+    if result["status"] not in VALID_TOOL_STATUSES:
+        raise ContractError("tool status must be ok, partial, or error")
+    if not isinstance(result["tool_name"], str) or not result["tool_name"]:
+        raise ContractError("tool_name must be a non-empty string")
+    if not isinstance(result["request_id"], str) or not result["request_id"]:
+        raise ContractError("request_id must be a non-empty string")
+    if not isinstance(result["parameters"], Mapping):
+        raise ContractError("parameters must be a mapping")
+    if not isinstance(result["evidence_refs"], list) or any(
+        not isinstance(ref, str) or not ref for ref in result["evidence_refs"]
+    ):
+        raise ContractError("evidence_refs must be a list of non-empty strings")
+    if not isinstance(result["warnings"], list) or any(not isinstance(w, str) for w in result["warnings"]):
+        raise ContractError("warnings must be a list of strings")
+    if result["status"] == "ok" and not result["evidence_refs"]:
+        raise ContractError("ok tool results require supporting evidence_refs")
+    if result["status"] == "error" and not result["error"]:
+        raise ContractError("error tool results require an error payload")
+    return result
+
+
+def validate_claim(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, Mapping):
+        raise ContractError("analyst claim must be a mapping")
+    _require_keys(
+        payload,
+        (
+            "claim_id",
+            "question_id",
+            "statement",
+            "claim_type",
+            "confidence",
+            "supporting_evidence",
+            "causal_language_allowed",
+            "requires_human_review",
+        ),
+        "analyst claim",
+    )
+    claim = dict(payload)
+    if claim["claim_type"] not in VALID_CLAIM_TYPES:
+        raise ContractError("invalid claim_type")
+    if not isinstance(claim["statement"], str) or not claim["statement"].strip():
+        raise ContractError("claim statement must be non-empty")
+    if not isinstance(claim["supporting_evidence"], list) or any(
+        not isinstance(ref, str) or not ref for ref in claim["supporting_evidence"]
+    ):
+        raise ContractError("supporting_evidence must be a list of non-empty strings")
+    if not isinstance(claim["causal_language_allowed"], bool):
+        raise ContractError("causal_language_allowed must be boolean")
+    if not isinstance(claim["requires_human_review"], bool):
+        raise ContractError("requires_human_review must be boolean")
+    return claim
+
+
+def retry_tool_once(
+    tool_name: str,
+    call: Callable[[Mapping[str, Any]], Mapping[str, Any]],
+    parameters: Mapping[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    warnings: list[str] = []
+    last_error = "unknown tool failure"
+
+    for attempt in (1, 2):
+        try:
+            result = validate_tool_envelope(call(parameters))
+            if result["status"] != "error":
+                return result, warnings
+            last_error = str(result.get("error") or "tool returned error")
+        except Exception as exc:
+            last_error = str(exc)
+
+        if attempt == 1:
+            warnings.append(f"{tool_name}: first attempt failed; retried once")
+
+    failure = {
+        "tool_name": tool_name,
+        "request_id": f"{tool_name}-retry-exhausted",
+        "status": "error",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "parameters": dict(parameters),
+        "data": None,
+        "evidence_refs": [],
+        "warnings": ["retry exhausted"],
+        "error": last_error,
+    }
+    return failure, warnings
+
+
+def default_verify_claim(claim: Mapping[str, Any], available_evidence: set[str]) -> dict[str, str]:
+    claim = validate_claim(claim)
+    supporting = set(claim["supporting_evidence"])
+
+    if not supporting or not supporting.issubset(available_evidence):
+        return {
+            "claim_id": claim["claim_id"],
+            "outcome": "remove",
+            "reason": "missing or unavailable evidence",
+        }
+
+    if not claim["causal_language_allowed"]:
+        try:
+            guard_noncausal(claim["statement"])
+        except ContractError:
+            return {
+                "claim_id": claim["claim_id"],
+                "outcome": "flag",
+                "reason": "unsupported causal language",
+            }
+
+    if claim["requires_human_review"]:
+        return {
+            "claim_id": claim["claim_id"],
+            "outcome": "flag",
+            "reason": "human review required",
+        }
+
+    return {
+        "claim_id": claim["claim_id"],
+        "outcome": "keep",
+        "reason": "evidence available",
+    }
+
+
+def apply_verifier_outcomes(
+    claims: Sequence[dict[str, Any]],
+    outcomes: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    outcome_by_id: dict[str, Mapping[str, Any]] = {}
+    for outcome in outcomes:
+        if outcome.get("outcome") not in VALID_OUTCOMES:
+            raise ContractError("invalid verifier outcome")
+        outcome_by_id[str(outcome.get("claim_id"))] = outcome
+
+    accepted: list[dict[str, Any]] = []
+    removed: list[dict[str, Any]] = []
+    for claim in claims:
+        outcome = outcome_by_id.get(str(claim["claim_id"]))
+        if outcome is None:
+            outcome = {
+                "claim_id": claim["claim_id"],
+                "outcome": "remove",
+                "reason": "missing verifier outcome",
+            }
+        enriched = dict(claim)
+        enriched["verifier_outcome"] = outcome["outcome"]
+        enriched["verifier_reason"] = outcome.get("reason")
+        if outcome["outcome"] == "remove":
+            removed.append(enriched)
+        else:
+            accepted.append(enriched)
+    return accepted, removed
+
+
+def run_wbr(
+    tool_calls: Sequence[
+        tuple[str, Callable[[Mapping[str, Any]], Mapping[str, Any]], Mapping[str, Any]]
+    ],
+    analyst: Callable[[Sequence[Mapping[str, Any]]], Sequence[Mapping[str, Any]]],
+    *,
+    verifier: Optional[
+        Callable[[Mapping[str, Any], set[str]], Mapping[str, Any]]
+    ] = None,
+    renderer: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+    expected_tool_names: Sequence[str],
+    label: str = "SYNTHETIC",
+) -> RunResult:
+    """Mockable orchestration boundary for tools -> analyst -> verifier -> renderer.
+
+    Tool payload data stays opaque so Lakshmi retains ownership of tool-specific
+    shapes and evidence-reference details. The runner enforces only the approved
+    envelope, retry/failure contract, evidence presence, and claim contract.
+    """
+
+    tool_results: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    by_name: dict[str, dict[str, Any]] = {}
+
+    for tool_name, call, parameters in tool_calls:
+        result, retry_warnings = retry_tool_once(tool_name, call, parameters)
+        tool_results.append(result)
+        by_name[tool_name] = result
+        warnings.extend(retry_warnings)
+        warnings.extend(result.get("warnings", []))
+
+    missing_tools = [name for name in expected_tool_names if name not in by_name]
+    if missing_tools:
+        warnings.append("missing expected tools: " + ", ".join(missing_tools))
+
+    complete_tools = (
+        not missing_tools
+        and all(
+            by_name[name]["status"] == "ok" and by_name[name]["evidence_refs"]
+            for name in expected_tool_names
+        )
+    )
+
+    available_evidence = {
+        ref
+        for result in tool_results
+        if result["status"] in {"ok", "partial"}
+        for ref in result["evidence_refs"]
+    }
+
+    valid_claims: list[dict[str, Any]] = []
+    try:
+        raw_claims = analyst(tuple(tool_results))
+        if not isinstance(raw_claims, Sequence) or isinstance(raw_claims, (str, bytes)):
+            raise ContractError("analyst response must be a sequence of claims")
+        for index, raw_claim in enumerate(raw_claims):
+            try:
+                valid_claims.append(validate_claim(raw_claim))
+            except Exception as exc:
+                warnings.append(f"analyst claim {index} rejected as malformed: {exc}")
+    except Exception as exc:
+        warnings.append(f"analyst response unavailable or malformed: {exc}")
+        valid_claims = []
+
+    verifier_fn = verifier or default_verify_claim
+    outcomes: list[Mapping[str, Any]] = []
+    for claim in valid_claims:
+        try:
+            outcome = dict(verifier_fn(claim, available_evidence))
+            if outcome.get("claim_id") != claim["claim_id"]:
+                raise ContractError("verifier claim_id mismatch")
+            if outcome.get("outcome") not in VALID_OUTCOMES:
+                raise ContractError("invalid verifier outcome")
+            outcomes.append(outcome)
+        except Exception as exc:
+            warnings.append(f"verifier failed for {claim['claim_id']}: {exc}")
+            outcomes.append(
+                {
+                    "claim_id": claim["claim_id"],
+                    "outcome": "remove",
+                    "reason": "verifier failure",
+                }
+            )
+
+    accepted_claims, removed_claims = apply_verifier_outcomes(valid_claims, outcomes)
+    all_claims_supported = (
+        bool(valid_claims)
+        and all(claim["verifier_outcome"] == "keep" for claim in accepted_claims)
+        and not removed_claims
+    )
+
+    status = "complete" if complete_tools and all_claims_supported else "partial"
+
+    renderer_input = {
+        "label": label,
+        "status": status,
+        "tool_results": tool_results,
+        "claims": accepted_claims,
+        "removed_claims": removed_claims,
+        "warnings": warnings,
+    }
+    rendered = renderer(renderer_input) if renderer is not None else None
+
+    return RunResult(
+        status=status,
+        tool_results=tuple(tool_results),
+        claims=tuple(accepted_claims),
+        removed_claims=tuple(removed_claims),
+        warnings=tuple(warnings),
+        renderer_input=renderer_input,
+        rendered=rendered,
+    )
