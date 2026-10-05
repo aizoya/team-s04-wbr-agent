@@ -22,8 +22,8 @@ The final report must include supporting evidence, caveats, and actionable quest
 
 ## Working ownership
 - Franklyn Rosario, MBA-ITM — product scope, acceptance testing, demo story, AWS architecture, runner, Bedrock integration, verifier
-- Lakshmi Bharathy Kumar — Olist exploration, metric definitions, Athena queries, weekly_metrics, planted scenarios, S3/Athena data setup, tool functions, analyst loop
-- Maxime Gillot — implementation ownership pending confirmation
+- Lakshmi Bharathy Kumar — Olist exploration, metric definitions, Athena queries, weekly_metrics, planted scenarios, S3/Athena data setup, tool functions, analyst loop, final submission
+- Maxime Gillot — final report/output layer, output tests, integration-test support, README support
 
 ## Development workflow
 - One branch per task
@@ -38,6 +38,21 @@ Region: `us-east-2`
 - Athena results bucket: `aizoya-s04-wbr-athena-results-704554708405`
 - Glue database: `s04_wbr`
 - Athena workgroup: `S04-WBR`
+
+## Franklyn runner/verifier branch
+`build/franklyn-runner-verifier-v2`
+
+The branch provides:
+- strict completion rules;
+- tool-envelope and claim validation;
+- one-retry failure behavior;
+- evidence-aware verifier outcomes;
+- explicit internal/external metric adapters;
+- a renderer input boundary;
+- synthetic complete/partial demos;
+- local verification tooling.
+
+Real-data acceptance remains pending Lakshmi's final tool outputs and Maxime's renderer implementation.
 
 ## License
 MIT
