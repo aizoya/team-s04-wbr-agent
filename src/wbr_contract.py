@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Mapping, Optional, Sequence
 
 
 class ContractError(ValueError):
@@ -12,6 +12,13 @@ class ContractError(ValueError):
 
 @dataclass(frozen=True)
 class Metric:
+    """Internal metric model.
+
+    Internal status intentionally uses uppercase values and a singular evidence_ref.
+    External tool envelopes use lowercase ok/partial/error and plural evidence_refs.
+    Conversion must be explicit through the adapter functions below.
+    """
+
     name: str
     value: Optional[float]
     status: str = "OK"
@@ -19,9 +26,11 @@ class Metric:
     caveat: Optional[str] = None
 
 
+EXPECTED_HEADLINE_METRICS = ("revenue", "orders", "review_score")
+
 CAUSAL_PATTERNS = [
     r"\bcaused by\b",
-    r"\bbecause of\b",
+    r"\bbecause(?:\s+of)?\b",
     r"\bdue to\b",
     r"\bled to\b",
     r"\bresulted in\b",
@@ -70,9 +79,77 @@ def guard_noncausal(text: str) -> None:
             raise ContractError("unsupported causal language detected")
 
 
-def report_status(metrics: Iterable[Metric]) -> str:
-    return "COMPLETE" if all(m.status == "OK" and m.evidence_ref for m in metrics) else "PARTIAL"
+def report_status(
+    metrics: Iterable[Metric],
+    expected_names: Sequence[str] = EXPECTED_HEADLINE_METRICS,
+) -> str:
+    """Return COMPLETE only for a non-empty, exact expected set with valid values/evidence."""
+
+    items = list(metrics)
+    if not items:
+        return "PARTIAL"
+
+    by_name = {metric.name: metric for metric in items}
+    if set(by_name) != set(expected_names):
+        return "PARTIAL"
+
+    for name in expected_names:
+        metric = by_name[name]
+        if metric.status != "OK" or not metric.evidence_ref or metric.value is None:
+            return "PARTIAL"
+        validate_number(metric.value, f"metric.{name}.value")
+
+    return "COMPLETE"
 
 
 def unavailable_metric(name: str, caveat: str) -> Metric:
     return Metric(name=name, value=None, status="UNAVAILABLE", caveat=caveat)
+
+
+def metric_to_external(metric: Metric) -> dict[str, Any]:
+    """Explicit internal -> external adapter; never equate status/evidence fields implicitly."""
+
+    status_map = {"OK": "ok", "PARTIAL": "partial", "UNAVAILABLE": "error"}
+    if metric.status not in status_map:
+        raise ContractError(f"unsupported internal metric status: {metric.status}")
+    return {
+        "name": metric.name,
+        "value": metric.value,
+        "status": status_map[metric.status],
+        "evidence_refs": [metric.evidence_ref] if metric.evidence_ref else [],
+        "warnings": [metric.caveat] if metric.caveat else [],
+    }
+
+
+def external_to_metric(payload: Mapping[str, Any]) -> Metric:
+    """Explicit external -> internal adapter for simple metric-shaped payloads."""
+
+    status_map = {"ok": "OK", "partial": "PARTIAL", "error": "UNAVAILABLE"}
+    status = payload.get("status")
+    if status not in status_map:
+        raise ContractError("external metric status must be ok, partial, or error")
+
+    refs = payload.get("evidence_refs", [])
+    if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref for ref in refs):
+        raise ContractError("evidence_refs must be a list of non-empty strings")
+
+    value = payload.get("value")
+    internal_status = status_map[status]
+    if internal_status == "OK":
+        value = validate_number(value, "external_metric.value")
+    elif value is not None:
+        value = validate_number(value, "external_metric.value")
+
+    warnings = payload.get("warnings", [])
+    if warnings is None:
+        warnings = []
+    if not isinstance(warnings, list) or any(not isinstance(w, str) for w in warnings):
+        raise ContractError("warnings must be a list of strings")
+
+    return Metric(
+        name=str(payload.get("name") or ""),
+        value=value,
+        status=internal_status,
+        evidence_ref=refs[0] if refs else None,
+        caveat="; ".join(warnings) if warnings else None,
+    )
