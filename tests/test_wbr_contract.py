@@ -4,8 +4,10 @@ from src.wbr_contract import (
     ContractError,
     Metric,
     assert_unique_order_ids,
+    external_to_metric,
     guard_noncausal,
     mean_review,
+    metric_to_external,
     pct_change,
     reconcile_total,
     report_status,
@@ -33,15 +35,55 @@ class WBRContractTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             reconcile_total(800.0, [300.0, 250.0, 200.0], "category_revenue")
 
-    def test_causal_claim_blocked(self):
+    def test_bare_because_causal_claim_blocked(self):
+        with self.assertRaises(ContractError):
+            guard_noncausal("Revenue fell because reviews fell.")
         with self.assertRaises(ContractError):
             guard_noncausal("Revenue fell because of lower reviews.")
         guard_noncausal("Revenue and review score both declined.")
 
     def test_failure_produces_partial(self):
-        ok = Metric("revenue", 800.0, evidence_ref="athena:q-123")
-        bad = unavailable_metric("review_score", "timeout")
-        self.assertEqual(report_status([ok, bad]), "PARTIAL")
+        metrics = [
+            Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+            unavailable_metric("review_score", "timeout"),
+        ]
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
+    def test_empty_metric_set_is_partial(self):
+        self.assertEqual(report_status([]), "PARTIAL")
+
+    def test_incomplete_metric_set_is_partial(self):
+        metrics = [
+            Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+        ]
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
+    def test_missing_evidence_is_partial(self):
+        metrics = [
+            Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+            Metric("review_score", 3.0),
+        ]
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
+    def test_complete_requires_expected_valid_metrics(self):
+        metrics = [
+            Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+            Metric("review_score", 3.0, evidence_ref="athena:q-review"),
+        ]
+        self.assertEqual(report_status(metrics), "COMPLETE")
+
+    def test_explicit_external_adapter(self):
+        metric = Metric("revenue", 800.0, evidence_ref="athena:q-revenue")
+        external = metric_to_external(metric)
+        self.assertEqual(external["status"], "ok")
+        self.assertEqual(external["evidence_refs"], ["athena:q-revenue"])
+        restored = external_to_metric(external)
+        self.assertEqual(restored.status, "OK")
+        self.assertEqual(restored.evidence_ref, "athena:q-revenue")
 
 
 if __name__ == "__main__":
