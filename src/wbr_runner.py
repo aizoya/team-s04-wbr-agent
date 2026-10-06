@@ -257,9 +257,17 @@ def run_wbr(
         raw_claims = analyst(tuple(tool_results))
         if not isinstance(raw_claims, Sequence) or isinstance(raw_claims, (str, bytes)):
             raise ContractError("analyst response must be a sequence of claims")
+        seen_claim_ids: set[str] = set()
         for index, raw_claim in enumerate(raw_claims):
             try:
-                valid_claims.append(validate_claim(raw_claim))
+                claim = validate_claim(raw_claim)
+                claim_id = str(claim["claim_id"])
+                if not claim_id:
+                    raise ContractError("claim_id must be non-empty")
+                if claim_id in seen_claim_ids:
+                    raise ContractError(f"duplicate claim_id: {claim_id}")
+                seen_claim_ids.add(claim_id)
+                valid_claims.append(claim)
             except Exception as exc:
                 rejected_claims += 1
                 warnings.append(f"analyst claim {index} rejected as malformed: {exc}")
