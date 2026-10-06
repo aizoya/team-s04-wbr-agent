@@ -29,13 +29,11 @@ class Metric:
 EXPECTED_HEADLINE_METRICS = ("revenue", "orders", "review_score")
 
 CAUSAL_PATTERNS = [
-    r"\bcaused by\b",
-    r"\bcaused\b",
+    r"\bcaus(?:e|es|ed|ing)\b",
     r"\bbecause(?:\s+of)?\b",
     r"\bdue to\b",
-    r"\bled to\b",
-    r"\bresulted in\b",
-    r"\bresulted from\b",
+    r"\ble(?:ad|ads|d|ading) to\b",
+    r"\bresult(?:s|ed|ing)? (?:in|from)\b",
     r"\bas a result of\b",
     r"\bdriven by\b",
     r"\battribut(?:ed|able) to\b",
@@ -105,7 +103,12 @@ def report_status(
 
     for name in expected_names:
         metric = by_name[name]
-        if metric.status != "OK" or not metric.evidence_ref or metric.value is None:
+        if (
+            metric.status != "OK"
+            or not isinstance(metric.evidence_ref, str)
+            or not metric.evidence_ref.strip()
+            or metric.value is None
+        ):
             return "PARTIAL"
         validate_number(metric.value, f"metric.{name}.value")
 
@@ -126,7 +129,7 @@ def metric_to_external(metric: Metric) -> dict[str, Any]:
         "name": metric.name,
         "value": metric.value,
         "status": status_map[metric.status],
-        "evidence_refs": [metric.evidence_ref] if metric.evidence_ref else [],
+        "evidence_refs": [metric.evidence_ref] if isinstance(metric.evidence_ref, str) and metric.evidence_ref.strip() else [],
         "warnings": [metric.caveat] if metric.caveat else [],
     }
 
@@ -140,7 +143,9 @@ def external_to_metric(payload: Mapping[str, Any]) -> Metric:
         raise ContractError("external metric status must be ok, partial, or error")
 
     refs = payload.get("evidence_refs", [])
-    if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref for ref in refs):
+    if not isinstance(refs, list) or any(
+        not isinstance(ref, str) or not ref.strip() for ref in refs
+    ):
         raise ContractError("evidence_refs must be a list of non-empty strings")
 
     value = payload.get("value")
