@@ -51,14 +51,14 @@ def validate_tool_envelope(payload: Mapping[str, Any]) -> dict[str, Any]:
     result = dict(payload)
     if result["status"] not in VALID_TOOL_STATUSES:
         raise ContractError("tool status must be ok, partial, or error")
-    if not isinstance(result["tool_name"], str) or not result["tool_name"]:
+    if not isinstance(result["tool_name"], str) or not result["tool_name"].strip():
         raise ContractError("tool_name must be a non-empty string")
-    if not isinstance(result["request_id"], str) or not result["request_id"]:
+    if not isinstance(result["request_id"], str) or not result["request_id"].strip():
         raise ContractError("request_id must be a non-empty string")
     if not isinstance(result["parameters"], Mapping):
         raise ContractError("parameters must be a mapping")
     if not isinstance(result["evidence_refs"], list) or any(
-        not isinstance(ref, str) or not ref for ref in result["evidence_refs"]
+        not isinstance(ref, str) or not ref.strip() for ref in result["evidence_refs"]
     ):
         raise ContractError("evidence_refs must be a list of non-empty strings")
     if not isinstance(result["warnings"], list) or any(not isinstance(w, str) for w in result["warnings"]):
@@ -97,7 +97,7 @@ def validate_claim(payload: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(claim["statement"], str) or not claim["statement"].strip():
         raise ContractError("claim statement must be non-empty")
     if not isinstance(claim["supporting_evidence"], list) or any(
-        not isinstance(ref, str) or not ref for ref in claim["supporting_evidence"]
+        not isinstance(ref, str) or not ref.strip() for ref in claim["supporting_evidence"]
     ):
         raise ContractError("supporting_evidence must be a list of non-empty strings")
     if not isinstance(claim["causal_language_allowed"], bool):
@@ -228,8 +228,11 @@ def run_wbr(
     tool_results: list[dict[str, Any]] = []
     warnings: list[str] = []
     by_name: dict[str, dict[str, Any]] = {}
+    duplicate_tool_names: set[str] = set()
 
     for tool_name, call, parameters in tool_calls:
+        if tool_name in by_name:
+            duplicate_tool_names.add(tool_name)
         result, retry_warnings = retry_tool_once(tool_name, call, parameters)
         tool_results.append(result)
         by_name[tool_name] = result
@@ -239,9 +242,13 @@ def run_wbr(
     missing_tools = [name for name in expected_tool_names if name not in by_name]
     if missing_tools:
         warnings.append("missing expected tools: " + ", ".join(missing_tools))
+    if duplicate_tool_names:
+        warnings.append("duplicate configured tools: " + ", ".join(sorted(duplicate_tool_names)))
 
     complete_tools = (
         not missing_tools
+        and not duplicate_tool_names
+        and len(expected_tool_names) == len(set(expected_tool_names))
         and all(
             by_name[name]["status"] == "ok" and by_name[name]["evidence_refs"]
             for name in expected_tool_names
