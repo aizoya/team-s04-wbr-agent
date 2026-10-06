@@ -177,11 +177,13 @@ class WBRRunnerTests(unittest.TestCase):
         self.assertEqual(result.tool_results[0]["tool_name"], "weekly_revenue")
         self.assertIn("mismatch", result.tool_results[0]["error"])
 
-    def test_bare_because_claim_is_flagged(self):
+    def test_duplicate_claim_ids_are_rejected_and_partial(self):
         def analyst(_results):
-            claim = good_claims(_results)[0]
-            claim["statement"] = "Revenue fell because reviews fell."
-            return [claim]
+            supported = good_claims(_results)[0]
+            unsupported = dict(supported)
+            unsupported["statement"] = "Revenue fell as a result of lower reviews."
+            unsupported["supporting_evidence"] = ["athena:not-present"]
+            return [unsupported, supported]
 
         result = run_wbr(
             self.all_good_tools(),
@@ -189,7 +191,31 @@ class WBRRunnerTests(unittest.TestCase):
             expected_tool_names=EXPECTED_TOOLS,
         )
         self.assertEqual(result.status, "partial")
-        self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
+        self.assertEqual(len(result.claims), 0)
+        self.assertEqual(len(result.removed_claims), 1)
+        self.assertTrue(any("duplicate claim_id" in warning for warning in result.warnings))
+
+    def test_common_causal_constructions_are_flagged(self):
+        for statement in (
+            "Revenue fell because reviews fell.",
+            "Revenue fell as a result of lower reviews.",
+            "Revenue decline was driven by lower reviews.",
+            "Revenue decline was attributed to lower reviews.",
+            "Revenue decline was stemming from lower reviews.",
+        ):
+            with self.subTest(statement=statement):
+                def analyst(_results, statement=statement):
+                    claim = good_claims(_results)[0]
+                    claim["statement"] = statement
+                    return [claim]
+
+                result = run_wbr(
+                    self.all_good_tools(),
+                    analyst,
+                    expected_tool_names=EXPECTED_TOOLS,
+                )
+                self.assertEqual(result.status, "partial")
+                self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
 
     def test_error_tool_retry_exhaustion_preserves_failure(self):
         attempts = {"count": 0}
