@@ -217,6 +217,20 @@ class WBRRunnerTests(unittest.TestCase):
                 self.assertEqual(result.status, "partial")
                 self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
 
+    def test_non_string_claim_id_is_rejected_and_partial(self):
+        def analyst(_results):
+            claim = good_claims(_results)[0]
+            claim["claim_id"] = None
+            return [claim]
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("claim_id must be a non-empty string" in warning for warning in result.warnings))
+
     def test_error_tool_retry_exhaustion_preserves_failure(self):
         attempts = {"count": 0}
 
