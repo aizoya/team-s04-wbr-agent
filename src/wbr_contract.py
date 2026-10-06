@@ -110,7 +110,10 @@ def report_status(
             or metric.value is None
         ):
             return "PARTIAL"
-        validate_number(metric.value, f"metric.{name}.value")
+        try:
+            validate_number(metric.value, f"metric.{name}.value")
+        except ContractError:
+            return "PARTIAL"
 
     return "COMPLETE"
 
