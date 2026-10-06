@@ -30,10 +30,12 @@ EXPECTED_HEADLINE_METRICS = ("revenue", "orders", "review_score")
 
 CAUSAL_PATTERNS = [
     r"\bcaused by\b",
+    r"\bcaused\b",
     r"\bbecause(?:\s+of)?\b",
     r"\bdue to\b",
     r"\bled to\b",
     r"\bresulted in\b",
+    r"\bresulted from\b",
     r"\bas a result of\b",
     r"\bdriven by\b",
     r"\battribut(?:ed|able) to\b",
@@ -91,6 +93,10 @@ def report_status(
 
     items = list(metrics)
     if not items:
+        return "PARTIAL"
+
+    names = [metric.name for metric in items]
+    if len(names) != len(set(names)):
         return "PARTIAL"
 
     by_name = {metric.name: metric for metric in items}
