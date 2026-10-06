@@ -45,6 +45,21 @@ def good_claims(_tool_results):
     ]
 
 
+def trusted_test_verifier(claim, evidence_by_ref):
+    supporting = set(claim["supporting_evidence"])
+    if supporting and supporting.issubset(set(evidence_by_ref)):
+        return {
+            "claim_id": claim["claim_id"],
+            "outcome": "keep",
+            "reason": "trusted synthetic verifier",
+        }
+    return {
+        "claim_id": claim["claim_id"],
+        "outcome": "remove",
+        "reason": "missing evidence",
+    }
+
+
 class WBRRunnerTests(unittest.TestCase):
     def all_good_tools(self):
         return [make_tool(name, envelope(name)) for name in EXPECTED_TOOLS]
@@ -61,6 +76,7 @@ class WBRRunnerTests(unittest.TestCase):
             good_claims,
             expected_tool_names=EXPECTED_TOOLS,
             renderer=renderer,
+            verifier=trusted_test_verifier,
         )
         self.assertEqual(result.status, "complete")
         self.assertEqual(result.rendered, "rendered")
@@ -119,10 +135,46 @@ class WBRRunnerTests(unittest.TestCase):
 
         tools = self.all_good_tools()
         tools[0] = ("weekly_revenue", flaky, {})
-        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        result = run_wbr(
+            tools,
+            good_claims,
+            expected_tool_names=EXPECTED_TOOLS,
+            verifier=trusted_test_verifier,
+        )
         self.assertEqual(attempts["count"], 2)
         self.assertEqual(result.status, "complete")
         self.assertTrue(any("retried once" in warning for warning in result.warnings))
+
+    def test_default_verifier_never_keeps_claim_from_reference_membership_alone(self):
+        def analyst(_results):
+            claim = good_claims(_results)[0]
+            claim["statement"] = "Revenue increased 500%."
+            return [claim]
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
+        self.assertEqual(result.claims[0]["verifier_reason"], "semantic verification unavailable")
+
+    def test_analyst_cannot_self_authorize_causal_language(self):
+        def analyst(_results):
+            claim = good_claims(_results)[0]
+            claim["statement"] = "Lower reviews caused the revenue decline."
+            claim["causal_language_allowed"] = True
+            return [claim]
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
+        self.assertEqual(result.claims[0]["verifier_reason"], "unsupported causal language")
 
     def test_missing_evidence_removes_claim_and_partial(self):
         def analyst(_results):
