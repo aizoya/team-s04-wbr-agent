@@ -114,6 +114,10 @@ def retry_tool_once(
     for attempt in (1, 2):
         try:
             result = validate_tool_envelope(call(parameters))
+            if result["tool_name"] != tool_name:
+                raise ContractError(
+                    f"tool envelope name mismatch: expected {tool_name}, got {result['tool_name']}"
+                )
             if result["status"] != "error":
                 return result, warnings
             last_error = str(result.get("error") or "tool returned error")
@@ -215,12 +219,7 @@ def run_wbr(
     expected_tool_names: Sequence[str],
     label: str = "SYNTHETIC",
 ) -> RunResult:
-    """Mockable orchestration boundary for tools -> analyst -> verifier -> renderer.
-
-    Tool payload data stays opaque so Lakshmi retains ownership of tool-specific
-    shapes and evidence-reference details. The runner enforces only the approved
-    envelope, retry/failure contract, evidence presence, and claim contract.
-    """
+    """Mockable orchestration boundary for tools -> analyst -> verifier -> renderer."""
 
     tool_results: list[dict[str, Any]] = []
     warnings: list[str] = []
@@ -253,6 +252,7 @@ def run_wbr(
     }
 
     valid_claims: list[dict[str, Any]] = []
+    rejected_claims = 0
     try:
         raw_claims = analyst(tuple(tool_results))
         if not isinstance(raw_claims, Sequence) or isinstance(raw_claims, (str, bytes)):
@@ -261,10 +261,12 @@ def run_wbr(
             try:
                 valid_claims.append(validate_claim(raw_claim))
             except Exception as exc:
+                rejected_claims += 1
                 warnings.append(f"analyst claim {index} rejected as malformed: {exc}")
     except Exception as exc:
         warnings.append(f"analyst response unavailable or malformed: {exc}")
         valid_claims = []
+        rejected_claims += 1
 
     verifier_fn = verifier or default_verify_claim
     outcomes: list[Mapping[str, Any]] = []
@@ -288,7 +290,8 @@ def run_wbr(
 
     accepted_claims, removed_claims = apply_verifier_outcomes(valid_claims, outcomes)
     all_claims_supported = (
-        bool(valid_claims)
+        rejected_claims == 0
+        and bool(valid_claims)
         and all(claim["verifier_outcome"] == "keep" for claim in accepted_claims)
         and not removed_claims
     )
