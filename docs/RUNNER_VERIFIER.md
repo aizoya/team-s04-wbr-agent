@@ -5,9 +5,12 @@ Owner: Franklyn Rosario, MBA-ITM
 ## Scope
 
 This branch implements the mockable runner/verifier path only. It does not
-implement Lakshmi's Olist profiling, Athena SQL, weekly_metrics table, three
+implement Lakshmi's Olist profiling, Athena SQL, weekly tables, three
 data tools, analyst loop, or final tool payload shapes. It also does not
 implement Maxime's final renderer.
+
+Metric semantics are finalized separately in `docs/METRIC_CONTRACT.md`.
+The runner intentionally treats tool-specific `data` payloads as opaque.
 
 ## Current orchestration
 
@@ -51,21 +54,34 @@ python3 demo/run_synthetic_demo.py --scenario complete
 python3 demo/run_synthetic_demo.py --scenario partial
 ```
 
-The output is explicitly labeled `SYNTHETIC`. The category/state payloads in
-the demo are placeholders only; they do not freeze Lakshmi's final data shapes.
+The synthetic fixture remains for deterministic contract/unit tests. The
+judge-facing demo should use real Olist weeks plus a planted scenario and the
+real incomplete week starting 2018-08-20.
 
 ## Still unresolved / owned by the data workstream or team
 
 Do not freeze these in runner code:
 
-- exact comparison weeks and timezone;
-- revenue definition and qualifying-order rules;
-- review canonicalization/coverage details;
 - tool-specific `data` payloads;
 - final `evidence_refs` structure;
 - confidence policy.
 
+## Finalized metric contract
+
+The runner does not conflict with the final V1 metric contract:
+
+- revenue orders exclude canceled, unavailable, and unpaid orders;
+- product revenue excludes freight;
+- reviews are averaged to one score per order;
+- review coverage is `review_count / orders`;
+- weeks start Monday;
+- complete analysis window is 2017-01-30 through 2018-08-13;
+- category/state groupings are owned by the data layer;
+- totals come from `weekly_metrics`, while category comparisons come from
+  `weekly_category_metrics`.
+
 ## Real AWS boundary
 
 The tests and demo on this branch are local/mocked and require no AWS
-credentials. Real-data acceptance remains pending Lakshmi's tool outputs.
+credentials. Real-data acceptance remains pending Lakshmi's tool outputs and
+AWS parity checks.
