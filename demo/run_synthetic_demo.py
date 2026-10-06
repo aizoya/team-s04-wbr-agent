@@ -110,9 +110,24 @@ def main() -> None:
             }
         ]
 
+    def verifier(claim, evidence_by_ref):
+        supporting = set(claim["supporting_evidence"])
+        if supporting and supporting.issubset(set(evidence_by_ref)):
+            return {
+                "claim_id": claim["claim_id"],
+                "outcome": "keep",
+                "reason": "trusted synthetic verifier",
+            }
+        return {
+            "claim_id": claim["claim_id"],
+            "outcome": "remove",
+            "reason": "missing evidence",
+        }
+
     result = run_wbr(
         calls,
         analyst,
+        verifier=verifier,
         expected_tool_names=EXPECTED_TOOLS,
         label="SYNTHETIC",
     )
