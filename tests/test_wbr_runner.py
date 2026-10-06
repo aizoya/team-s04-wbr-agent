@@ -148,6 +148,35 @@ class WBRRunnerTests(unittest.TestCase):
         self.assertEqual(result.status, "partial")
         self.assertTrue(any("analyst response" in warning for warning in result.warnings))
 
+    def test_mixed_valid_and_malformed_claims_stay_partial(self):
+        def analyst(_results):
+            claims = good_claims(_results)
+            claims.append({"claim_id": "broken"})
+            return claims
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("rejected as malformed" in warning for warning in result.warnings))
+
+    def test_mismatched_tool_name_retries_then_partial(self):
+        attempts = {"count": 0}
+
+        def wrong_tool(_params):
+            attempts["count"] += 1
+            return envelope("weekly_orders")
+
+        tools = self.all_good_tools()
+        tools[0] = ("weekly_revenue", wrong_tool, {})
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(attempts["count"], 2)
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.tool_results[0]["tool_name"], "weekly_revenue")
+        self.assertIn("mismatch", result.tool_results[0]["error"])
+
     def test_bare_because_claim_is_flagged(self):
         def analyst(_results):
             claim = good_claims(_results)[0]
