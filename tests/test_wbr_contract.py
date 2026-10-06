@@ -35,11 +35,20 @@ class WBRContractTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             reconcile_total(800.0, [300.0, 250.0, 200.0], "category_revenue")
 
-    def test_bare_because_causal_claim_blocked(self):
-        with self.assertRaises(ContractError):
-            guard_noncausal("Revenue fell because reviews fell.")
-        with self.assertRaises(ContractError):
-            guard_noncausal("Revenue fell because of lower reviews.")
+    def test_common_causal_claims_blocked(self):
+        for statement in (
+            "Revenue fell because reviews fell.",
+            "Revenue fell because of lower reviews.",
+            "Revenue fell as a result of lower reviews.",
+            "Revenue decline was driven by lower reviews.",
+            "Revenue decline was attributed to lower reviews.",
+            "Revenue decline was stemming from lower reviews.",
+            "Lower reviews caused the revenue decline.",
+            "Revenue decline resulted from lower reviews.",
+        ):
+            with self.subTest(statement=statement):
+                with self.assertRaises(ContractError):
+                    guard_noncausal(statement)
         guard_noncausal("Revenue and review score both declined.")
 
     def test_failure_produces_partial(self):
@@ -57,6 +66,15 @@ class WBRContractTests(unittest.TestCase):
         metrics = [
             Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
             Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+        ]
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
+    def test_duplicate_metric_names_are_partial(self):
+        metrics = [
+            Metric("revenue", 800.0, evidence_ref="athena:q-revenue-a"),
+            Metric("revenue", 900.0, evidence_ref="athena:q-revenue-b"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+            Metric("review_score", 3.0, evidence_ref="athena:q-review"),
         ]
         self.assertEqual(report_status(metrics), "PARTIAL")
 
