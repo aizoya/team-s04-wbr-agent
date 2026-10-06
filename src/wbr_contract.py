@@ -34,6 +34,10 @@ CAUSAL_PATTERNS = [
     r"\bdue to\b",
     r"\bled to\b",
     r"\bresulted in\b",
+    r"\bas a result of\b",
+    r"\bdriven by\b",
+    r"\battribut(?:ed|able) to\b",
+    r"\bstemming from\b",
 ]
 
 
