@@ -89,6 +89,17 @@ class WBRContractTests(unittest.TestCase):
         ]
         self.assertEqual(report_status(metrics), "PARTIAL")
 
+    def test_invalid_metric_values_are_partial(self):
+        metrics = [
+            Metric("revenue", float("nan"), evidence_ref="athena:q-revenue"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+            Metric("review_score", 3.0, evidence_ref="athena:q-review"),
+        ]
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
+        metrics[0] = Metric("revenue", "not-a-number", evidence_ref="athena:q-revenue")
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
     def test_missing_evidence_is_partial(self):
         metrics = [
             Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
