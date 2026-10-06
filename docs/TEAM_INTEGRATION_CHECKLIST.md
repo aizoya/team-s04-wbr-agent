@@ -17,7 +17,8 @@ Ready:
 - mockable tool -> analyst -> verifier -> renderer orchestration;
 - renderer input fixture;
 - complete/partial synthetic demo;
-- zero-dependency local quality gate.
+- zero-dependency local quality gate;
+- final metric contract aligned to Lakshmi's data foundation.
 
 No additional Franklyn-side feature work should be needed before team integration unless a teammate exposes an interface mismatch.
 
@@ -29,8 +30,10 @@ Provide:
 - final `evidence_refs` structure;
 - representative successful tool envelopes;
 - representative partial/error envelopes;
-- real Olist/Athena outputs for acceptance;
-- final decisions for weeks/timezone, revenue/qualifying-order rules, and review coverage when ready.
+- planted scenarios and answer keys;
+- real Olist/Athena outputs for acceptance.
+
+Finalized metric semantics are now canonical in `docs/METRIC_CONTRACT.md`.
 
 The runner treats `data` as opaque and should not require Lakshmi to conform to a runner-invented data schema.
 
@@ -51,18 +54,18 @@ The current deterministic example is `fixtures/renderer_input_complete.json`.
 2. Bind Maxime's renderer callback to `run_wbr(..., renderer=...)`.
 3. Run `python3 scripts/verify.py`.
 4. Run synthetic complete and partial integration.
-5. Run real-data acceptance against Lakshmi's outputs.
-6. Record mocked/local evidence separately from real AWS evidence.
-7. Request teammate review.
-8. Do not merge solely because tests pass.
+5. Run planted-scenario acceptance on real Olist weeks.
+6. Run real-data/Athena acceptance.
+7. Record mocked/local evidence separately from real AWS evidence.
+8. Request teammate review.
+9. Do not merge solely because tests pass.
 
 ## Human/team decisions still open
 
 Do not silently freeze:
-- exact comparison weeks/timezone;
-- revenue and qualifying-order rules;
-- review coverage policy;
-- confidence policy.
+- final `evidence_refs` structure;
+- confidence policy;
+- any future tool-specific payload fields not covered by the metric contract.
 
 ## Gates
 
