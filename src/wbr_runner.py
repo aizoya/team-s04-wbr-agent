@@ -145,9 +145,21 @@ def retry_tool_once(
     return failure, warnings
 
 
-def default_verify_claim(claim: Mapping[str, Any], available_evidence: set[str]) -> dict[str, str]:
+def default_verify_claim(
+    claim: Mapping[str, Any],
+    evidence_by_ref: Mapping[str, Mapping[str, Any]],
+) -> dict[str, str]:
+    """Fail-closed fallback verifier.
+
+    Evidence-reference membership alone is not semantic proof that a claim matches
+    the underlying tool payload. Without a trusted verifier callback that inspects
+    referenced payloads, this fallback may remove or flag claims but never keep
+    them solely because references exist.
+    """
+
     claim = validate_claim(claim)
     supporting = set(claim["supporting_evidence"])
+    available_evidence = set(evidence_by_ref)
 
     if not supporting or not supporting.issubset(available_evidence):
         return {
@@ -156,15 +168,16 @@ def default_verify_claim(claim: Mapping[str, Any], available_evidence: set[str])
             "reason": "missing or unavailable evidence",
         }
 
-    if not claim["causal_language_allowed"]:
-        try:
-            guard_noncausal(claim["statement"])
-        except ContractError:
-            return {
-                "claim_id": claim["claim_id"],
-                "outcome": "flag",
-                "reason": "unsupported causal language",
-            }
+    # Analyst-provided causal_language_allowed is not an authorization boundary.
+    # The fallback verifier always enforces the non-causal guard.
+    try:
+        guard_noncausal(claim["statement"])
+    except ContractError:
+        return {
+            "claim_id": claim["claim_id"],
+            "outcome": "flag",
+            "reason": "unsupported causal language",
+        }
 
     if claim["requires_human_review"]:
         return {
@@ -175,8 +188,8 @@ def default_verify_claim(claim: Mapping[str, Any], available_evidence: set[str])
 
     return {
         "claim_id": claim["claim_id"],
-        "outcome": "keep",
-        "reason": "evidence available",
+        "outcome": "flag",
+        "reason": "semantic verification unavailable",
     }
 
 
@@ -217,7 +230,10 @@ def run_wbr(
     analyst: Callable[[Sequence[Mapping[str, Any]]], Sequence[Mapping[str, Any]]],
     *,
     verifier: Optional[
-        Callable[[Mapping[str, Any], set[str]], Mapping[str, Any]]
+        Callable[
+            [Mapping[str, Any], Mapping[str, Mapping[str, Any]]],
+            Mapping[str, Any],
+        ]
     ] = None,
     renderer: Optional[Callable[[Mapping[str, Any]], Any]] = None,
     expected_tool_names: Sequence[str],
@@ -255,12 +271,15 @@ def run_wbr(
         )
     )
 
-    available_evidence = {
-        ref
-        for result in tool_results
-        if result["status"] in {"ok", "partial"}
-        for ref in result["evidence_refs"]
-    }
+    evidence_by_ref: dict[str, Mapping[str, Any]] = {}
+    for result in tool_results:
+        if result["status"] not in {"ok", "partial"}:
+            continue
+        for ref in result["evidence_refs"]:
+            if ref in evidence_by_ref:
+                warnings.append(f"duplicate evidence reference: {ref}")
+                continue
+            evidence_by_ref[ref] = result
 
     valid_claims: list[dict[str, Any]] = []
     rejected_claims = 0
@@ -289,7 +308,7 @@ def run_wbr(
     outcomes: list[Mapping[str, Any]] = []
     for claim in valid_claims:
         try:
-            outcome = dict(verifier_fn(claim, available_evidence))
+            outcome = dict(verifier_fn(claim, evidence_by_ref))
             if outcome.get("claim_id") != claim["claim_id"]:
                 raise ContractError("verifier claim_id mismatch")
             if outcome.get("outcome") not in VALID_OUTCOMES:
