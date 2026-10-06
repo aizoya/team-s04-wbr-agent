@@ -88,6 +88,10 @@ def validate_claim(payload: Mapping[str, Any]) -> dict[str, Any]:
         "analyst claim",
     )
     claim = dict(payload)
+    if not isinstance(claim["claim_id"], str) or not claim["claim_id"].strip():
+        raise ContractError("claim_id must be a non-empty string")
+    if not isinstance(claim["question_id"], str) or not claim["question_id"].strip():
+        raise ContractError("question_id must be a non-empty string")
     if claim["claim_type"] not in VALID_CLAIM_TYPES:
         raise ContractError("invalid claim_type")
     if not isinstance(claim["statement"], str) or not claim["statement"].strip():
@@ -261,9 +265,7 @@ def run_wbr(
         for index, raw_claim in enumerate(raw_claims):
             try:
                 claim = validate_claim(raw_claim)
-                claim_id = str(claim["claim_id"])
-                if not claim_id:
-                    raise ContractError("claim_id must be non-empty")
+                claim_id = claim["claim_id"]
                 if claim_id in seen_claim_ids:
                     raise ContractError(f"duplicate claim_id: {claim_id}")
                 seen_claim_ids.add(claim_id)
