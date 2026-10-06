@@ -81,9 +81,18 @@ class RendererBoundaryTests(unittest.TestCase):
             captured.update(payload)
             return payload
 
+        def verifier(claim, evidence_by_ref):
+            supporting = set(claim["supporting_evidence"])
+            return {
+                "claim_id": claim["claim_id"],
+                "outcome": "keep" if supporting.issubset(set(evidence_by_ref)) else "remove",
+                "reason": "trusted renderer-boundary verifier",
+            }
+
         result = run_wbr(
             calls,
             analyst,
+            verifier=verifier,
             renderer=renderer,
             expected_tool_names=EXPECTED_TOOLS,
         )
