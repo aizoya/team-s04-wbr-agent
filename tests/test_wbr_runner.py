@@ -217,6 +217,41 @@ class WBRRunnerTests(unittest.TestCase):
                 self.assertEqual(result.status, "partial")
                 self.assertEqual(result.claims[0]["verifier_outcome"], "flag")
 
+    def test_whitespace_evidence_ref_retries_then_partial(self):
+        attempts = {"count": 0}
+
+        def blank_evidence(_params):
+            attempts["count"] += 1
+            return envelope("weekly_revenue", refs=["   "])
+
+        tools = self.all_good_tools()
+        tools[0] = ("weekly_revenue", blank_evidence, {})
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(attempts["count"], 2)
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.tool_results[0]["status"], "error")
+
+    def test_whitespace_claim_evidence_is_rejected(self):
+        def analyst(_results):
+            claim = good_claims(_results)[0]
+            claim["supporting_evidence"] = ["   "]
+            return [claim]
+
+        result = run_wbr(
+            self.all_good_tools(),
+            analyst,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("supporting_evidence" in warning for warning in result.warnings))
+
+    def test_duplicate_configured_tool_names_force_partial(self):
+        tools = self.all_good_tools()
+        tools.append(make_tool("weekly_revenue", envelope("weekly_revenue")))
+        result = run_wbr(tools, good_claims, expected_tool_names=EXPECTED_TOOLS)
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("duplicate configured tools" in warning for warning in result.warnings))
+
     def test_non_string_claim_id_is_rejected_and_partial(self):
         def analyst(_results):
             claim = good_claims(_results)[0]
