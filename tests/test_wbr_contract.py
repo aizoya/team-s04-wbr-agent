@@ -45,6 +45,9 @@ class WBRContractTests(unittest.TestCase):
             "Revenue decline was stemming from lower reviews.",
             "Lower reviews caused the revenue decline.",
             "Revenue decline resulted from lower reviews.",
+            "Lower reviews cause revenue to decline.",
+            "Lower reviews are causing revenue to decline.",
+            "Revenue declines resulting from lower reviews.",
         ):
             with self.subTest(statement=statement):
                 with self.assertRaises(ContractError):
@@ -73,6 +76,14 @@ class WBRContractTests(unittest.TestCase):
         metrics = [
             Metric("revenue", 800.0, evidence_ref="athena:q-revenue-a"),
             Metric("revenue", 900.0, evidence_ref="athena:q-revenue-b"),
+            Metric("orders", 4.0, evidence_ref="athena:q-orders"),
+            Metric("review_score", 3.0, evidence_ref="athena:q-review"),
+        ]
+        self.assertEqual(report_status(metrics), "PARTIAL")
+
+    def test_whitespace_evidence_is_partial(self):
+        metrics = [
+            Metric("revenue", 800.0, evidence_ref="   "),
             Metric("orders", 4.0, evidence_ref="athena:q-orders"),
             Metric("review_score", 3.0, evidence_ref="athena:q-review"),
         ]
