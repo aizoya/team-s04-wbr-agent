@@ -59,6 +59,10 @@ class WBRContractTests(unittest.TestCase):
                     guard_noncausal(statement)
         guard_noncausal("Revenue and review score both declined.")
 
+    def test_noncausal_disclaimer_and_causal_question_allowed(self):
+        guard_noncausal("Revenue and review score both declined; this report does not establish a causal relationship.")
+        guard_noncausal("Could lower review scores have contributed to the revenue change?")
+
     def test_failure_produces_partial(self):
         metrics = [
             Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
