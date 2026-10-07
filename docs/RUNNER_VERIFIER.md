@@ -18,10 +18,11 @@ The runner intentionally treats tool-specific `data` payloads as opaque.
 2. Retry an exception, malformed result, or explicit error exactly once.
 3. After retry exhaustion, preserve an error envelope and continue honestly.
 4. Validate analyst claims against the approved claim contract.
-5. Verify evidence availability and unsupported causal language.
-6. Apply keep / downgrade / flag / remove outcomes.
-7. Pass structured verified results to the renderer callback when available.
-8. Without a renderer, expose the same payload through `renderer_input`.
+5. Build an evidence-reference index that gives a trusted verifier callback access to the referenced tool envelopes.
+6. Verify evidence availability and unsupported causal language.
+7. Apply keep / downgrade / flag / remove outcomes.
+8. Pass structured verified results to the renderer callback when available.
+9. Without a renderer, expose the same payload through `renderer_input`.
 
 ## Status / evidence adapter
 
@@ -42,8 +43,15 @@ representations as identical.
 
 A mocked run is `complete` only when all configured V1 tool boundaries are
 present, each expected tool returns `ok` with evidence, and every valid claim
-is verified as `keep`. Empty, incomplete, malformed, unavailable, missing-
-evidence, flagged, or removed results remain `partial`.
+is verified as `keep` by an explicit trusted verifier callback. The fallback
+verifier is fail-closed: evidence-reference membership alone is not semantic
+proof of a statement, so it never returns `keep` solely because a reference
+exists. Empty, incomplete, malformed, unavailable, missing-evidence, flagged,
+or removed results remain `partial`.
+
+The analyst field `causal_language_allowed` is not treated as authorization.
+The fallback verifier always enforces the non-causal guard; any causal exception
+must come from trusted verifier policy rather than analyst output.
 
 ## Synthetic demo
 
