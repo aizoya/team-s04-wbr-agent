@@ -37,3 +37,10 @@ Agreed definitions for the WBR agent. Details and rationale: `docs/stage1_data_f
 ## Join safety
 - Items and reviews are pre-aggregated to one row per order before joining.
 - Totals come from `weekly_metrics`; category comparisons come from `weekly_category_metrics`.
+
+
+## Ratio / zero-denominator policy
+- Derived ratios are computed from stored sums and counts.
+- If a denominator is zero, the ratio is unavailable (`null` / no numeric value) rather than `0`, infinity, or a fabricated estimate.
+- Tools should attach an explicit warning when a requested KPI is unavailable because its denominator is zero.
+- This applies to review coverage, average order value, items per order, average item price, cancellation rate, average review score, 1-star share, late-delivery rate, and average delivery days.
