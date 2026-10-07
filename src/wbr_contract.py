@@ -63,6 +63,15 @@ def mean_review(scores: Iterable[Any]) -> Optional[float]:
     return None if not clean else sum(clean) / len(clean)
 
 
+def safe_ratio(numerator: Any, denominator: Any) -> Optional[float]:
+    """Return None for a zero denominator; never emit infinity or fabricate zero."""
+    numerator = validate_number(numerator, "ratio.numerator")
+    denominator = validate_number(denominator, "ratio.denominator")
+    if denominator == 0:
+        return None
+    return numerator / denominator
+
+
 def assert_unique_order_ids(rows: list[dict]) -> None:
     ids = [row["order_id"] for row in rows]
     if len(ids) != len(set(ids)):
