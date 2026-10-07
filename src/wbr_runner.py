@@ -282,6 +282,18 @@ def run_wbr(
         )
     )
 
+    return verify_and_render(
+        tool_results, analyst, warnings=warnings, complete_tools=complete_tools,
+        verifier=verifier, renderer=renderer, label=label,
+    )
+
+
+def verify_and_render(
+    tool_results, analyst, *, warnings, complete_tools,
+    verifier=None, renderer=None, label="SYNTHETIC",
+) -> RunResult:
+    """Shared verification boundary; never invokes or retries data tools."""
+    warnings = list(warnings)
     evidence_by_ref: dict[str, Mapping[str, Any]] = {}
     duplicate_evidence_refs: set[str] = set()
     for result in tool_results:
@@ -377,3 +389,4 @@ def run_wbr(
         renderer_input=renderer_input,
         rendered=rendered,
     )
+
