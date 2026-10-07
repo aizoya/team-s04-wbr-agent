@@ -304,6 +304,18 @@ class WBRRunnerTests(unittest.TestCase):
         self.assertEqual(result.status, "partial")
         self.assertTrue(any("duplicate configured tools" in warning for warning in result.warnings))
 
+    def test_unexpected_configured_tool_forces_partial(self):
+        tools = self.all_good_tools()
+        tools.append(make_tool("extra_tool", envelope("extra_tool")))
+        result = run_wbr(
+            tools,
+            good_claims,
+            verifier=trusted_test_verifier,
+            expected_tool_names=EXPECTED_TOOLS,
+        )
+        self.assertEqual(result.status, "partial")
+        self.assertTrue(any("unexpected configured tools" in warning for warning in result.warnings))
+
     def test_non_string_claim_id_is_rejected_and_partial(self):
         def analyst(_results):
             claim = good_claims(_results)[0]
