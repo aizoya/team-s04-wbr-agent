@@ -66,6 +66,36 @@ class RealOlistAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "expected complete, got partial"):
             require_expected_status("PLANTED_REAL_OLIST", "partial")
 
+    def check_statement(self, actual, expected="Revenue declined 20%.", outcome="keep"):
+        verifier = make_answer_key_verifier({"c1": {
+            "outcome": outcome,
+            "required_evidence_refs": ["athena:weekly_revenue"],
+            "expected_statement": expected,
+        }})
+        return verifier({"claim_id": "c1", "statement": actual,
+                         "supporting_evidence": ["athena:weekly_revenue"]},
+                        {"athena:weekly_revenue": {"tool_name": "weekly_revenue"}})
+
+    def test_correct_id_and_refs_cannot_keep_wrong_statement(self):
+        result = self.check_statement("Revenue increased 500%.")
+        self.assertEqual(result["outcome"], "remove")
+        self.assertEqual(result["reason"], "claim statement differs from trusted answer key")
+
+    def test_exact_trusted_statement_can_be_kept(self):
+        self.assertEqual(self.check_statement("Revenue declined 20%.")["outcome"], "keep")
+
+    def test_absent_blank_and_nontext_answer_assertions_deny(self):
+        for expected in (None, "", "   ", 20):
+            with self.subTest(expected=expected):
+                result = self.check_statement("Revenue declined 20%.", expected=expected)
+                self.assertEqual(result["outcome"], "remove")
+                self.assertEqual(result["reason"], "answer key has no exact expected statement")
+
+    def test_invalid_outcome_cannot_bypass_answer_contract(self):
+        result = self.check_statement("Revenue declined 20%.", outcome="APPROVED")
+        self.assertEqual(result["outcome"], "remove")
+        self.assertEqual(result["reason"], "answer key has invalid verifier outcome")
+
     def test_incomplete_real_olist_requires_partial(self):
         require_expected_status("REAL_OLIST_INCOMPLETE", "partial")
         with self.assertRaisesRegex(ValueError, "expected partial, got complete"):
@@ -74,3 +104,4 @@ class RealOlistAcceptanceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

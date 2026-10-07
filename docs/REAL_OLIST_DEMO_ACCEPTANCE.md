@@ -43,7 +43,9 @@ The fixture must contain:
 - `claims`
 - `answer_key`
 
-Each answer-key claim supplies an expected verifier `outcome` and non-empty `required_evidence_refs`.
+Each answer-key claim supplies an expected verifier `outcome`, non-empty `required_evidence_refs`, and an exact `expected_statement`. A matching claim ID and evidence references alone cannot keep a changed statement. Missing/blank/non-text assertions, changed statements, and invalid outcomes fail closed. Accepted outcomes are `keep`, `downgrade`, `flag`, and `remove`.
+
+This is deterministic acceptance against a separately trusted planted-scenario answer key. It does not semantically verify arbitrary generated prose or independently validate the numerical content of tool data. Exact wording is intentional: a paraphrase needs an explicit trusted answer-key update, not an automatic pass. Lakshmi owns the real-data answer key; do not generate expected statements from the claims under test.
 
 ## Evidence rule
 
@@ -55,3 +57,4 @@ A revised script or fixture template is not evidence of a successful real-data r
 - teammate acceptance.
 
 Until Lakshmi's final tools, planted scenario, answer key, and representative envelopes are available, the real-Olist run remains BLOCKED, not passed.
+

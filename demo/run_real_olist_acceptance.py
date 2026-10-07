@@ -70,6 +70,26 @@ def make_answer_key_verifier(answer_key: Mapping[str, Mapping[str, Any]]):
                 "reason": "answer-key evidence unavailable",
             }
 
+        expected_statement = expected.get("expected_statement")
+        if not isinstance(expected_statement, str) or not expected_statement.strip():
+            return {
+                "claim_id": claim["claim_id"],
+                "outcome": "remove",
+                "reason": "answer key has no exact expected statement",
+            }
+        if claim.get("statement") != expected_statement:
+            return {
+                "claim_id": claim["claim_id"],
+                "outcome": "remove",
+                "reason": "claim statement differs from trusted answer key",
+            }
+        if expected.get("outcome") not in {"keep", "downgrade", "flag", "remove"}:
+            return {
+                "claim_id": claim["claim_id"],
+                "outcome": "remove",
+                "reason": "answer key has invalid verifier outcome",
+            }
+
         return {
             "claim_id": claim["claim_id"],
             "outcome": expected["outcome"],
@@ -147,3 +167,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
