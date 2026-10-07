@@ -263,13 +263,17 @@ def run_wbr(
         warnings.extend(result.get("warnings", []))
 
     missing_tools = [name for name in expected_tool_names if name not in by_name]
+    unexpected_tools = [name for name in by_name if name not in expected_tool_names]
     if missing_tools:
         warnings.append("missing expected tools: " + ", ".join(missing_tools))
+    if unexpected_tools:
+        warnings.append("unexpected configured tools: " + ", ".join(unexpected_tools))
     if duplicate_tool_names:
         warnings.append("duplicate configured tools: " + ", ".join(sorted(duplicate_tool_names)))
 
     complete_tools = (
         not missing_tools
+        and not unexpected_tools
         and not duplicate_tool_names
         and len(expected_tool_names) == len(set(expected_tool_names))
         and all(
