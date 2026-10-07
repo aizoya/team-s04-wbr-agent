@@ -114,6 +114,7 @@ def retry_tool_once(
 ) -> tuple[dict[str, Any], list[str]]:
     warnings: list[str] = []
     last_error = "unknown tool failure"
+    last_valid_error_envelope: Optional[dict[str, Any]] = None
 
     for attempt in (1, 2):
         try:
@@ -124,12 +125,18 @@ def retry_tool_once(
                 )
             if result["status"] != "error":
                 return result, warnings
+            last_valid_error_envelope = result
             last_error = str(result.get("error") or "tool returned error")
         except Exception as exc:
             last_error = str(exc)
 
         if attempt == 1:
             warnings.append(f"{tool_name}: first attempt failed; retried once")
+
+    if last_valid_error_envelope is not None:
+        failure = dict(last_valid_error_envelope)
+        failure["warnings"] = list(failure.get("warnings", [])) + ["retry exhausted"]
+        return failure, warnings
 
     failure = {
         "tool_name": tool_name,
@@ -272,14 +279,19 @@ def run_wbr(
     )
 
     evidence_by_ref: dict[str, Mapping[str, Any]] = {}
+    duplicate_evidence_refs: set[str] = set()
     for result in tool_results:
         if result["status"] not in {"ok", "partial"}:
             continue
         for ref in result["evidence_refs"]:
             if ref in evidence_by_ref:
+                duplicate_evidence_refs.add(ref)
                 warnings.append(f"duplicate evidence reference: {ref}")
                 continue
             evidence_by_ref[ref] = result
+
+    if duplicate_evidence_refs:
+        complete_tools = False
 
     valid_claims: list[dict[str, Any]] = []
     rejected_claims = 0
@@ -308,11 +320,19 @@ def run_wbr(
     outcomes: list[Mapping[str, Any]] = []
     for claim in valid_claims:
         try:
+            supporting = set(claim["supporting_evidence"])
+            evidence_available = bool(supporting) and supporting.issubset(set(evidence_by_ref))
             outcome = dict(verifier_fn(claim, evidence_by_ref))
             if outcome.get("claim_id") != claim["claim_id"]:
                 raise ContractError("verifier claim_id mismatch")
             if outcome.get("outcome") not in VALID_OUTCOMES:
                 raise ContractError("invalid verifier outcome")
+            if outcome.get("outcome") == "keep" and not evidence_available:
+                outcome = {
+                    "claim_id": claim["claim_id"],
+                    "outcome": "remove",
+                    "reason": "missing or unavailable evidence",
+                }
             outcomes.append(outcome)
         except Exception as exc:
             warnings.append(f"verifier failed for {claim['claim_id']}: {exc}")
