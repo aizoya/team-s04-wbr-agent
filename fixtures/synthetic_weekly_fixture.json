@@ -1,0 +1,13 @@
+{
+  "label": "SYNTHETIC",
+  "prior_week": {
+    "revenue": 1000.0,
+    "orders": 4,
+    "review_scores": [5, 4, 4, 3]
+  },
+  "current_week": {
+    "revenue": 800.0,
+    "orders": 4,
+    "review_scores": [4, 3, 3, 2]
+  }
+}
