@@ -18,7 +18,10 @@ Ready:
 - renderer input fixture;
 - complete/partial synthetic demo;
 - zero-dependency local quality gate;
-- final metric contract aligned to Lakshmi's data foundation.
+- final metric contract aligned to Lakshmi's data foundation;
+- explicit zero-denominator KPI policy (`null`/unavailable, never infinity or fabricated zero);
+- founder-only AWS bootstrap packet in `docs/AWS_LAKSHMI_BOOTSTRAP.md`;
+- real-Olist acceptance harness in `demo/run_real_olist_acceptance.py`.
 
 No additional Franklyn-side feature work should be needed before team integration unless a teammate exposes an interface mismatch.
 
@@ -54,11 +57,12 @@ The current deterministic example is `fixtures/renderer_input_complete.json`.
 2. Bind Maxime's renderer callback to `run_wbr(..., renderer=...)`.
 3. Run `python3 scripts/verify.py`.
 4. Run synthetic complete and partial integration.
-5. Run planted-scenario acceptance on real Olist weeks.
-6. Run real-data/Athena acceptance.
-7. Record mocked/local evidence separately from real AWS evidence.
-8. Request teammate review.
-9. Do not merge solely because tests pass.
+5. Run planted-scenario acceptance on real Olist weeks with `demo/run_real_olist_acceptance.py`.
+6. Run the real 2018-08-20 incomplete-week case and independent-tool-failure case.
+7. Run real-data/Athena parity acceptance.
+8. Record mocked/local evidence separately from real AWS evidence.
+9. Request teammate review.
+10. Do not merge solely because tests pass.
 
 ## Human/team decisions still open
 
