@@ -11,6 +11,7 @@ from src.wbr_contract import (
     pct_change,
     reconcile_total,
     report_status,
+    safe_ratio,
     unavailable_metric,
 )
 
@@ -25,6 +26,10 @@ class WBRContractTests(unittest.TestCase):
     def test_missing_reviews_ignored(self):
         self.assertAlmostEqual(mean_review([5, None, 3]), 4.0)
         self.assertIsNone(mean_review([None, None]))
+
+    def test_zero_denominator_ratio_returns_none(self):
+        self.assertIsNone(safe_ratio(5, 0))
+        self.assertAlmostEqual(safe_ratio(5, 2), 2.5)
 
     def test_multi_item_join_safety(self):
         with self.assertRaises(ContractError):
