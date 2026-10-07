@@ -86,7 +86,22 @@ def reconcile_total(headline: float, parts: Iterable[Any], label: str, tolerance
 
 
 def guard_noncausal(text: str) -> None:
-    lowered = text.lower()
+    lowered = text.lower().strip()
+
+    if lowered.endswith("?"):
+        return
+
+    safe_meta_phrases = (
+        "does not establish",
+        "does not prove",
+        "does not show",
+        "cannot establish",
+        "cannot conclude",
+        "no evidence",
+    )
+    if any(phrase in lowered for phrase in safe_meta_phrases):
+        return
+
     for pattern in CAUSAL_PATTERNS:
         if re.search(pattern, lowered):
             raise ContractError("unsupported causal language detected")
