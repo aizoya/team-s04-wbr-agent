@@ -101,3 +101,7 @@ S04 — Well-Architected review completed October 8. AWS read-only access restor
 - Nova Micro model card: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-micro.html
 
 Resource observations above come from successful read-only API receipts, not documentation assumptions.
+
+## Follow-up runner reliability fix — October 8
+
+Franklyn-owned adapter now catches ordinary exceptions raised by the single analyst call (including model initialization before the analyst's own try block) and returns a partial report with empty evidence and the fixed code ANALYST_CALL_FAILED. It does not retry or copy exception text. Malformed returned contracts still fail validation; KeyboardInterrupt remains interruptible. Lakshmi's agent source is unchanged. Three added tests exercise these boundaries and renderer invocation; final local gate: **119 tests + both synthetic demos PASS**, scripts/verify.py exit 0. The earlier 116-test observation is the diagnostics-only checkpoint. AWS data, paid live run, credits, renderer and review blockers remain unchanged. Canonical tracking update: runner initialization recovery implemented and tested on PR #4; no paid calls, merge or deployment.
