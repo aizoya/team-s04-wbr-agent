@@ -1,10 +1,57 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import json
 from typing import Mapping
 
 from .wbr_contract import ContractError
 from .wbr_runner import validate_tool_envelope, verify_and_render
+
+
+def normalize_captured_envelope(raw):
+    """Bridge structured tool metadata without losing the original capture."""
+    if not isinstance(raw, Mapping):
+        raise ContractError("captured tool envelope must be a mapping")
+    normalized = deepcopy(dict(raw))
+    request_id = normalized.get("request_id")
+    if not isinstance(request_id, str) or not request_id.strip():
+        raise ContractError("request_id must be a non-empty string")
+    refs = normalized.get("evidence_refs")
+    warnings = normalized.get("warnings")
+    if not isinstance(refs, list) or not isinstance(warnings, list):
+        raise ContractError("evidence_refs and warnings must be lists")
+    converted = []
+    for index, ref in enumerate(refs):
+        if isinstance(ref, str):
+            converted.append(ref)
+        elif isinstance(ref, Mapping):
+            for key in ("query_id", "backend", "table", "executed_at"):
+                if not isinstance(ref.get(key), str) or not ref[key].strip():
+                    raise ContractError("structured evidence lacks " + key)
+            count = ref.get("row_count")
+            if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                raise ContractError("structured evidence requires non-negative row_count")
+            # A capture-local lookup key, not an assertion of query authenticity.
+            converted.append(request_id + ":source:" + str(index))
+        else:
+            raise ContractError("invalid evidence reference")
+    rendered_warnings = []
+    for warning in warnings:
+        if isinstance(warning, str):
+            rendered_warnings.append(warning)
+        elif isinstance(warning, Mapping):
+            if any(not isinstance(warning.get(key), str) or not warning[key].strip()
+                   for key in ("code", "message")):
+                raise ContractError("structured warning requires code and message")
+            if not isinstance(warning.get("details", {}), Mapping):
+                raise ContractError("warning details must be a mapping")
+            rendered_warnings.append(json.dumps(dict(warning), sort_keys=True))
+        else:
+            raise ContractError("invalid warning")
+    normalized["evidence_refs"] = converted
+    normalized["warnings"] = rendered_warnings
+    normalized["source_envelope"] = deepcopy(dict(raw))
+    return validate_tool_envelope(normalized)
 
 
 def run_analyst_week(
@@ -13,7 +60,7 @@ def run_analyst_week(
 ):
     """Adapt trusted tool-wrapper captures from run_analyst(week) to RunResult.
 
-    report_draft is a list of V1 claims. evidence_log is a request_id-keyed
+    report_draft is a nested report or legacy list. evidence_log is a request_id-keyed
     mapping populated by tool wrappers, outside model-generated text.
     Repeated tool names are allowed; request IDs and evidence refs are unique.
     """
@@ -23,7 +70,17 @@ def run_analyst_week(
     if "report_draft" not in response or "evidence_log" not in response:
         raise ContractError("analyst result requires report_draft and evidence_log")
     response = deepcopy(response)
-    claims = response["report_draft"]
+    draft = response["report_draft"]
+    run = response.get("run", {})
+    if not isinstance(run, Mapping):
+        raise ContractError("run metadata must be a mapping")
+    nested = isinstance(draft, Mapping)
+    if nested:
+        claims = draft.get("claims")
+    elif draft is None and run.get("status") == "error":
+        claims = []
+    else:
+        claims = draft
     if not isinstance(claims, list):
         raise ContractError("report_draft must be a list of V1 claims")
     log = response["evidence_log"]
@@ -32,7 +89,7 @@ def run_analyst_week(
     envelopes = []
     refs = set()
     for request_id, raw in log.items():
-        envelope = validate_tool_envelope(raw)
+        envelope = normalize_captured_envelope(raw)
         if request_id != envelope["request_id"]:
             raise ContractError("evidence_log key must equal envelope request_id")
         for ref in envelope["evidence_refs"]:
@@ -53,8 +110,27 @@ def run_analyst_week(
         bool(expected) and len(expected) == len(set(expected))
         and not missing and not unexpected
         and all(item["status"] == "ok" for item in envelopes)
+        and run.get("status", "ok") == "ok"
+        and (not nested or (
+            draft.get("draft_status") == "COMPLETE"
+            and not draft.get("unavailable") and not draft.get("precheck_issues")
+        ))
     )
+    if run.get("status") == "error":
+        warnings.append("analyst run failed: " + str(run.get("error", "unknown error")))
+    aliases = {item["request_id"]: deepcopy(item["source_envelope"])
+               for item in envelopes} if nested else {}
+
+    def render_with_context(payload):
+        # Draft questions/metadata remain explicitly unverified analyst output.
+        payload["analyst_draft"] = deepcopy(draft)
+        payload["analyst_run"] = deepcopy(run)
+        payload["analyst_transcript"] = deepcopy(response.get("transcript", []))
+        payload["analyst_calls"] = deepcopy(response.get("calls", []))
+        return renderer(payload) if renderer is not None else None
+
     return verify_and_render(
         envelopes, lambda _envelopes: claims, warnings=warnings,
-        complete_tools=complete, verifier=verifier, renderer=renderer, label=label,
+        complete_tools=complete, verifier=verifier, renderer=render_with_context,
+        label=label, evidence_aliases=aliases,
     )
