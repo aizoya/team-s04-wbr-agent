@@ -48,7 +48,7 @@ fixtures matching these inspected contracts, not actual Olist query results.
 
 ## Verification and remaining gates
 
-`python3 scripts/verify.py`: 93/93 local tests PASS, including all earlier
+`python3 scripts/verify.py`: 95/95 local tests PASS, including all earlier
 runner/adapter/answer-key tests and 13 new handoff tests. Synthetic complete
 and partial demos PASS. This is not independent review, hosted CI evidence,
 real Strands execution, semantic acceptance of arbitrary prose, or live AWS.
@@ -71,13 +71,16 @@ statement of the form `[category] revenue|orders|items fell|rose N% [in state]`.
 It selects the cited weekly metric or exact breakdown group for the requested
 week, metric and filters. It checks finite non-negative current/previous
 values, a positive denominator, percent units and agreement with the tool's
-reported change. Mismatches outside displayed rounding precision or in direction
+reported change. The actual builder independently rounds current, previous and
+change to two decimals: the gate intersects their rounding intervals instead
+of requiring exact recomputation from rounded inputs. An uncertain denominator
+stays reviewed. Mismatches outside displayed rounding precision or in direction
 are removed. Conflicting/malformed captures and unknown prose remain flagged.
 Numbers in unrelated fields, metrics, weeks or groups cannot supply support.
 
 Matching percentages are still flagged for semantic/confidence review. This
 gate never returns keep: verifying one percentage does not establish arbitrary
-prose, cause, provenance, completeness or confidence. Twelve numeric regression
+prose, cause, provenance, completeness or confidence. Fourteen numeric regression
 tests plus one adapter V2 regression cover the boundary with synthetic data.
 
 ## Reproducible captured-response handoff
