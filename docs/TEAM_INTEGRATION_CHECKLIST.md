@@ -121,3 +121,20 @@ October 8 morning searches; this does not establish their current availability.
 Do not duplicate teammate uploads or infer completion. Final submission remains
 NO-GO until data/catalog parity, approved live evidence, renderer integration,
 reviewed verifier policy and reproducible demo acceptance are recorded.
+
+## Team communication and ownership reconciliation — October 8
+
+Authorized status email sent from franklyn@aizoya.com to Lakshmi Bharathy Kumar
+and Maxime Gillot; Outlook send action returned success (Sent Items search may
+lag and did not yet return the new message). Slack update posted successfully:
+https://awsusers.slack.com/archives/C0C648P9SV8/p1791478412697219
+No credentials included. Requested branch/commit, completed items, blockers and
+ETA; preserved separate spending, permissions, merge and submission gates.
+
+Recipient-history verification found Maxime's October 4 email explicitly
+accepting final report/output-layer ownership, tests, integration support and
+README. This corrects any earlier wording that his renderer ownership itself
+was unconfirmed. His current renderer implementation/delivery remains unverified;
+acceptance of the newer expanded coordination proposal is not assumed. Lakshmi's
+October 7 report confirms her data/agent work and pending AWS integration.
+No new teammate acknowledgement of today's handoff is established.
