@@ -9,12 +9,16 @@ Franklyn's runner/verifier work is intended to be integration-ready before team 
 Latest draft: PR #4, `build/s04-analyst-loop-adapter-20261007`, stacked on PR #3
 and the original PR #2 runner branch. No merge or approval is implied.
 
-Latest local gate: 95 tests and both synthetic demos PASS. The nested analyst
+Latest local gate: 107 tests and both synthetic demos PASS. The nested analyst
 adapter, structured evidence/warnings, request-ID citations, causal-check repair,
 bounded numeric-contradiction gate and offline capture replay are implemented.
 See `docs/LAKSHMI_CONTRACT_INTEGRATION_2026-10-07.md` for limits and source blobs.
-Correct numeric matches and unknown prose remain reviewed, not automatically
-kept. Real-data semantic verification is NOT complete.
+Correct numeric matches and unknown prose remain reviewed by default. An
+explicit opt-in policy candidate can keep only narrowly verified numeric facts
+after team review; see `docs/TOMORROW_HANDOFF.md`. Real-data semantic acceptance
+is NOT complete. The teammate execution handoff proposes Lakshmi owning actual
+data/agent receipts and Maxime coordinating renderer/integration while Franklyn
+is driving; their acceptance of ownership remains unconfirmed.
 
 Ready:
 - strict complete/partial rules;
