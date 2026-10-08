@@ -4,7 +4,30 @@ Status: **NO-GO for final submission acceptance; GO for offline preparation.**
 Submission deadline supplied by Franklyn: October 11, 2026, 11:59 AM Pacific.
 Protect the existing project and teammate branches. This is a targeted review, not a replacement architecture or permission to merge/deploy/spend.
 
-## Verified state
+
+## Latest checkpoint — October 8 afternoon
+
+This summary supersedes historical observations below where state has changed.
+
+- All five expected Parquet objects now exist in the agreed S3 layout (uploaded
+  3:52–3:55 PM Pacific); contents/parity remain unverified. Glue s04_wbr still has
+  zero tables. Do not duplicate Lakshmi's in-flight setup.
+- Approved Ohio Athena console read-only policy repair was applied/read back and
+  positive/negative IAM simulations passed, as recorded below. Console/runtime
+  acceptance is not established.
+- Maxime's report/output-layer ownership was confirmed by his October 4 email;
+  implementation delivery and expanded coordination acceptance remain unverified.
+- Latest offline gate: 123 tests plus both synthetic demos PASS; four additional
+  adapter-boundary regression tests, no runtime changes, published and read back
+  at c5f996ae922fcf5f6ea9697434e57cf60f49dfe3.
+- Approved accountability email and Slack sent once; Slack receipt:
+  https://awsusers.slack.com/archives/C0C648P9SV8/p1791497219968399
+- Final acceptance remains NO-GO. Data/catalog parity, approved live capture,
+  renderer integration, verifier-policy review and final demo evidence are open.
+  Credits and total live-run cost remain unknown. No new paid workload, merge or
+  deployment occurred during this afternoon checkpoint.
+
+## Initial verified state — historical
 
 Read-only AWS plugin authentication was restored on October 8. STS verified account 704554708405, IAM identity aizoya-admin. Successful API receipts support the following observations:
 
