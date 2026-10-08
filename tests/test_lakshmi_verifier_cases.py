@@ -31,10 +31,21 @@ class LakshmiVerifierCaseTests(unittest.TestCase):
         self.assertEqual(claim["verifier_outcome"], "flag")
         self.assertEqual(claim["verifier_reason"], "unsupported causal language")
 
-    def test_v2_numeric_semantic_gap_is_explicitly_flagged_not_kept(self):
+    def test_v2_without_scoped_numeric_capture_stays_flagged(self):
         claim = self.replay("health_beauty revenue fell 95% in SP.")
         self.assertEqual(claim["verifier_outcome"], "flag")
         self.assertEqual(claim["verifier_reason"], "semantic verification unavailable")
+
+    def test_v2_with_scoped_numeric_capture_is_removed(self):
+        response = handoff.LakshmiHandoffTests().response()
+        response["report_draft"]["claims"][0]["statement"] = "health_beauty revenue fell 95% in SP."
+        env = response["evidence_log"]["req-get_weekly_metric"]
+        env["parameters"].update(metric="product_revenue", state="SP", category="health_beauty")
+        env["data"] = {"metric": "product_revenue", "current": 10.9, "previous": 100,
+                       "change": -89.1, "change_type": "pct"}
+        result = run_analyst_week("2018-06-04", lambda week: response,
+                                 expected_tool_names=handoff.TOOLS)
+        self.assertEqual(result.removed_claims[0]["verifier_outcome"], "remove")
 
     def test_v3_failed_review_evidence_is_removed(self):
         claim = self.replay("Average review score was stable this week.", failed=True)
