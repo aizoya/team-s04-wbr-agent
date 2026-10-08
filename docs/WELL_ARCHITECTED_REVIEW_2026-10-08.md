@@ -240,3 +240,23 @@ during verification. Lakshmi requests one reconciliation SELECT for counts,
 revenue totals and date ranges across these five tables; her scan/cost estimate
 is not independently measured. New spending approval remains pending. Do not
 infer authorization for retries, additional queries or Bedrock runs.
+
+## Founder-approved single reconciliation query — October 8, 4:20 PM Pacific
+
+Franklyn approved ("A") the concrete one-query proposal and communicating it
+to Lakshmi. Authorization: Lakshmi may execute exactly one read-only reconciliation
+SELECT today, October 8 Pacific, in account 704554708405, us-east-2, S04-WBR,
+database s04_wbr, covering row counts, revenue totals and date ranges for
+weekly_metrics, weekly_category_metrics, order_facts, golden_weekly_metrics and
+golden_weekly_category_metrics against DuckDB. Total exposure ceiling USD0.01.
+No retries, additional queries, Bedrock invocation or write/DDL are authorized.
+Stop on failure, unexpected scope/cost or uncertain execution status; reconcile
+before another attempt. Existing enforced 100 MiB per-query scan cutoff is
+verified; it is not a verified total-dollar cap.
+
+Expires October 8, 2026, 11:59 PM Pacific or after the single execution, whichever
+occurs first. Requested receipt: exact SQL, query ID, final status, data scanned,
+runtime, output totals/date ranges and DuckDB comparison, excluding credentials
+and raw private rows. Lakshmi's USD0.00005 estimate is unverified; measured cost
+and query acceptance are not established. This record is approval, not an
+execution receipt. Assistant has not executed the query.
