@@ -48,7 +48,7 @@ fixtures matching these inspected contracts, not actual Olist query results.
 
 ## Verification and remaining gates
 
-`python3 scripts/verify.py`: 80/80 local tests PASS, including all earlier
+`python3 scripts/verify.py`: 93/93 local tests PASS, including all earlier
 runner/adapter/answer-key tests and 13 new handoff tests. Synthetic complete
 and partial demos PASS. This is not independent review, hosted CI evidence,
 real Strands execution, semantic acceptance of arbitrary prose, or live AWS.
@@ -58,12 +58,49 @@ real Strands execution, semantic acceptance of arbitrary prose, or live AWS.
 The four authored claim strings from Lakshmi's answer-key blob
 `0dfe5a8094d58383eed7f1cc063dd8b7c1b46efa` are replayed through the adapter
 and default verifier with synthetic captures. V1 and V4 flag unsupported causal
-language; V3 removes a claim citing a failed call. V2 flags with "semantic
-verification unavailable" rather than the required remove: this remains an
-acceptance gap, not a passed numeric-verification requirement. Real query
-payloads and numeric semantic verification are still required. The tests
-deliberately record fallback behavior; they do not implement an answer-key
-oracle or prove real Olist parity.
+language; V3 removes a claim citing a failed call. V2 now removes the unsupported
+95% assertion when a synthetic, matching capture reports an internally
+consistent 89.1% decline. Without a matching numeric capture it remains flagged.
+Actual real query replay remains required; no real Olist parity is established.
+
+## Numeric contradiction gate
+
+`src/numeric_verifier.py` is the adapter's default verifier wrapper; explicitly
+supplied verifier callbacks retain their own policy. It recognizes only a full
+statement of the form `[category] revenue|orders|items fell|rose N% [in state]`.
+It selects the cited weekly metric or exact breakdown group for the requested
+week, metric and filters. It checks finite non-negative current/previous
+values, a positive denominator, percent units and agreement with the tool's
+reported change. Mismatches outside displayed rounding precision or in direction
+are removed. Conflicting/malformed captures and unknown prose remain flagged.
+Numbers in unrelated fields, metrics, weeks or groups cannot supply support.
+
+Matching percentages are still flagged for semantic/confidence review. This
+gate never returns keep: verifying one percentage does not establish arbitrary
+prose, cause, provenance, completeness or confidence. Twelve numeric regression
+tests plus one adapter V2 regression cover the boundary with synthetic data.
+
+## Reproducible captured-response handoff
+
+After combining the reviewed code with Lakshmi's agent and Maxime's renderer:
+
+```sh
+python3 scripts/verify.py
+python3 demo/run_captured_analyst.py --week 2018-08-13 --response /path/to/saved-response.json
+```
+
+The second command replays a saved `run_analyst(week)` response without model,
+database or AWS calls. Output is labeled CAPTURED_UNVERIFIED. Saving a capture
+or replaying it does not authenticate its source. Do not commit credentials or
+private transcripts. Bind Maxime's renderer to the `renderer=` callback and
+use top-level verified outcomes rather than treating `analyst_draft` as accepted.
+
+Confidence reconciliation proposal: preserve Lakshmi's code-side low/medium/high
+as draft metadata; never treat high |z| as verified claim correctness or causal
+permission. Weak/missing data and unknown semantics remain review cases.
+Her strongest-signal and top-breakdown-group rules require team confirmation
+for claims about other groups. This is a proposal, not a new approved policy;
+numeric matching does not upgrade confidence or waive review.
 
 Removed blanket causal-guard exemptions for a trailing question mark or a
 disclaimer anywhere in the text, and added "drove" to the blocked patterns.
@@ -72,7 +109,7 @@ may now require review rather than silently bypassing the guard. This lexical
 check is conservative, not a complete semantic causal-language detector; a
 trusted custom verifier remains responsible for its own review policy.
 
-Remaining: actual tool/golden outputs and V2 numeric semantic acceptance, confidence
+Remaining: actual tool/golden outputs and real V2 replay, confidence
 policy reconciliation, Maxime renderer binding, real Olist/Athena parity and
 Bedrock tests, teammate review, merge decision, final demo/submission handoff.
 
