@@ -2,7 +2,7 @@
 
 ## Answer to Lakshmi (prepared; not sent)
 
-Your proposed `run_analyst(week) -> {report_draft, evidence_log}` works with the new runner adapter. `report_draft` is a list of V1 claim objects; `evidence_log` is a request-ID-keyed mapping containing the full, unchanged external tool envelopes. Tool wrappers must collect the log outside model-generated text. Include every attempt, including partial/error results, and allocate a unique request ID and unique evidence references per call. Claims continue to cite `supporting_evidence` references; the runner resolves these to the exact envelope and request ID. Repeated calls to the same tool are supported. No tools are replayed by this adapter.
+Your proposed `run_analyst(week) -> {report_draft, evidence_log}` works with the new runner adapter. `report_draft` is the nested report with a `claims` list (the legacy flat list is also accepted); `evidence_log` is a request-ID-keyed mapping containing the full, unchanged external tool envelopes. Tool wrappers must collect the log outside model-generated text. Include every attempt, including partial/error results, and allocate a unique request ID per call. Structured query metadata may repeat across distinct requests; the adapter does not collapse these calls. Nested claims cite `supporting_evidence` request IDs; the verifier resolves these to the exact original captured envelope. Structured evidence references and warning objects are adapted without losing their original fields. Repeated calls to the same tool are supported. No tools are replayed by this adapter.
 
 The adapter runs the existing verifier and renderer boundary. The fallback verifier remains fail-closed; reference existence alone never establishes semantic correctness. Only an explicit trusted verifier can keep a claim. The log's completeness and authenticity still require instrumentation in your tool wrappers; the adapter cannot prove an omitted call happened.
 
@@ -26,6 +26,9 @@ result = run_analyst_week(
     label="REAL_OLIST",  # only after actual Olist tools are connected
 )
 ```
+
+The latest mappings and source inspection are recorded in
+`docs/LAKSHMI_CONTRACT_INTEGRATION_2026-10-07.md`.
 
 Claim fields: claim_id, question_id, statement, claim_type, confidence,
 supporting_evidence, causal_language_allowed, requires_human_review.
@@ -69,16 +72,16 @@ Non-sensitive API receipts are in `S04_ACCESS_REPAIR_RECEIPT_2026-10-07.json`.
 Rollback, if separately requested: DeleteUserPolicy for this user and this
 exact inline policy name; preserve the original attached policy.
 
-Founder bootstrap remains in docs/AWS_LAKSHMI_BOOTSTRAP.md: enable console
-access, require first-login password change, provide the credential through
-an approved secure channel, and have Lakshmi return service-level sign-in,
-S3, Athena, Glue and Bedrock acceptance evidence. No temporary credential
-should enter the repo or this conversation. This handoff does not claim
-console access has been completed.
+Founder console bootstrap is now completed: GetLoginProfile confirmed
+console access with PasswordResetRequired=true on October 7. Franklyn's
+requested credential email and team checklist messages were sent. No
+credentials are stored in this handoff. Lakshmi's successful sign-in and
+service-level S3, Athena, Glue and Bedrock acceptance remain unconfirmed.
 
 ## Verification
 
-Local model-free quality gate: 59 tests PASS (including 9 adapter tests),
+Local model-free quality gate: 72 tests PASS (including 9 original adapter
+and 13 new Lakshmi handoff tests),
 plus complete and partial synthetic demos PASS. Existing runner behavior is
 preserved through a shared verification/rendering function. Real Strands,
 Bedrock, Olist, console and renderer acceptance remain untested.
