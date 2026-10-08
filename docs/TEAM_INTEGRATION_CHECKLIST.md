@@ -9,7 +9,7 @@ Franklyn's runner/verifier work is intended to be integration-ready before team 
 Latest draft: PR #4, `build/s04-analyst-loop-adapter-20261007`, stacked on PR #3
 and the original PR #2 runner branch. No merge or approval is implied.
 
-Latest local gate: 119 tests and both synthetic demos PASS. Offline settings diagnostics
+Latest local gate: 123 tests and both synthetic demos PASS. Offline settings diagnostics
 and privacy-safe analyst initialization recovery are also implemented.
 See `docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md` for the six-pillar assessment,
 read-only AWS evidence, costs, owner actions and submission NO-GO conditions. The nested analyst
@@ -21,7 +21,8 @@ explicit opt-in policy candidate can keep only narrowly verified numeric facts
 after team review; see `docs/TOMORROW_HANDOFF.md`. Real-data semantic acceptance
 is NOT complete. The teammate execution handoff proposes Lakshmi owning actual
 data/agent receipts and Maxime coordinating renderer/integration while Franklyn
-is driving; their acceptance of ownership remains unconfirmed.
+is driving. Lakshmi's data ownership and Maxime's output-layer ownership are
+confirmed; expanded integration coordination acceptance remains unconfirmed.
 
 Ready:
 - strict complete/partial rules;
@@ -109,7 +110,7 @@ Still require explicit approval for:
 - merge if team review requirements are not met.
 
 
-## October 8 verified AWS checkpoint
+## October 8 morning AWS checkpoint — historical
 
 AWS plugin access restored; STS account/identity verified. S04 buckets have default
 encryption/public-access blocking; Athena enforces a 100 MiB scan cutoff. Source
@@ -138,3 +139,24 @@ was unconfirmed. His current renderer implementation/delivery remains unverified
 acceptance of the newer expanded coordination proposal is not assumed. Lakshmi's
 October 7 report confirms her data/agent work and pending AWS integration.
 No new teammate acknowledgement of today's handoff is established.
+
+## Current checkpoint — October 8 afternoon
+
+Five Parquet objects are verified present in the agreed source/fixtures prefixes;
+this supersedes the earlier empty-bucket observation. Glue s04_wbr still returns
+zero tables. Object existence does not establish schema or golden-output parity.
+Preserve Lakshmi's in-flight catalog work.
+
+The approved five-action Ohio Athena console discovery policy was applied and
+read back; IAM simulations passed positive and negative boundaries. No live
+teammate console acceptance is established. No DeleteTable was added.
+
+Latest offline gate: 123 tests and both synthetic demos PASS. Four adapter-path
+failure/completion regression tests were published at
+c5f996ae922fcf5f6ea9697434e57cf60f49dfe3 and read back. No runtime changes.
+
+The approved accountability email and Slack message were sent once. Slack receipt:
+https://awsusers.slack.com/archives/C0C648P9SV8/p1791497219968399
+Current evidence does not establish full integration or submission readiness.
+See docs/TOMORROW_HANDOFF.md for the latest acceptance sequence and remaining
+owners. Historical checkpoints below/above are not current-state assertions.
