@@ -48,12 +48,31 @@ fixtures matching these inspected contracts, not actual Olist query results.
 
 ## Verification and remaining gates
 
-`python3 scripts/verify.py`: 72/72 local tests PASS, including all earlier
+`python3 scripts/verify.py`: 80/80 local tests PASS, including all earlier
 runner/adapter/answer-key tests and 13 new handoff tests. Synthetic complete
 and partial demos PASS. This is not independent review, hosted CI evidence,
 real Strands execution, semantic acceptance of arbitrary prose, or live AWS.
 
-Remaining: actual tool/golden outputs and V1–V4 verifier-case replay, confidence
+## Negative-claim replay and safety correction
+
+The four authored claim strings from Lakshmi's answer-key blob
+`0dfe5a8094d58383eed7f1cc063dd8b7c1b46efa` are replayed through the adapter
+and default verifier with synthetic captures. V1 and V4 flag unsupported causal
+language; V3 removes a claim citing a failed call. V2 flags with "semantic
+verification unavailable" rather than the required remove: this remains an
+acceptance gap, not a passed numeric-verification requirement. Real query
+payloads and numeric semantic verification are still required. The tests
+deliberately record fallback behavior; they do not implement an answer-key
+oracle or prove real Olist parity.
+
+Removed blanket causal-guard exemptions for a trailing question mark or a
+disclaimer anywhere in the text, and added "drove" to the blocked patterns.
+Four adversarial regression tests pass. Ambiguous causal questions/negations
+may now require review rather than silently bypassing the guard. This lexical
+check is conservative, not a complete semantic causal-language detector; a
+trusted custom verifier remains responsible for its own review policy.
+
+Remaining: actual tool/golden outputs and V2 numeric semantic acceptance, confidence
 policy reconciliation, Maxime renderer binding, real Olist/Athena parity and
 Bedrock tests, teammate review, merge decision, final demo/submission handoff.
 
