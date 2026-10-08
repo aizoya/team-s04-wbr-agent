@@ -48,7 +48,7 @@ fixtures matching these inspected contracts, not actual Olist query results.
 
 ## Verification and remaining gates
 
-`python3 scripts/verify.py`: 95/95 local tests PASS, including all earlier
+`python3 scripts/verify.py`: 107/107 local tests PASS, including all earlier
 runner/adapter/answer-key tests and 13 new handoff tests. Synthetic complete
 and partial demos PASS. This is not independent review, hosted CI evidence,
 real Strands execution, semantic acceptance of arbitrary prose, or live AWS.
@@ -97,6 +97,14 @@ database or AWS calls. Output is labeled CAPTURED_UNVERIFIED. Saving a capture
 or replaying it does not authenticate its source. Do not commit credentials or
 private transcripts. Bind Maxime's renderer to the `renderer=` callback and
 use top-level verified outcomes rather than treating `analyst_draft` as accepted.
+
+An optional, explicitly enabled numeric-fact policy is implemented and tested
+but OFF by default. It can keep only the exact bounded statement when all
+captures match, rounded intervals entirely support it, the prior-week comparison
+matches, data quality is clean and proposed scoped confidence reconciles.
+Twelve additional policy tests include integrated complete/partial behavior.
+See `docs/TOMORROW_HANDOFF.md` for review gates, policy details and enablement.
+No arbitrary prose or live acceptance has been approved by this implementation.
 
 Confidence reconciliation proposal: preserve Lakshmi's code-side low/medium/high
 as draft metadata; never treat high |z| as verified claim correctness or causal
