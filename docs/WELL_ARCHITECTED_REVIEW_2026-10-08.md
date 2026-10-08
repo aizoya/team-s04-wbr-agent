@@ -153,3 +153,26 @@ Next: exact selected workgroup/full error or a direct read-only GetWorkGroup tes
 using her existing configured credentials. No new permissions, credentials or
 paid query were created. Proposed source and fixture table-prefix layout is
 compatible with the architecture; golden fixtures must remain separately labeled.
+
+## Approved Athena console discovery repair — October 8, 12:51 PM Pacific
+
+Franklyn explicitly approved the five-action read-only addition at 12:50 PM.
+Applied a new dedicated inline policy S04-WBR-Lakshmi-ConsoleReadOnly-20261008
+to aws-hackathon-s04-lakshmi after verifying account/user and confirming that the
+new policy did not already exist. Existing teammate policies were preserved.
+PutUserPolicy succeeded; GetUserPolicy readback matched exactly.
+
+- athena:ListWorkGroups and athena:ListDataCatalogs: Resource *, with
+  aws:RequestedRegion equal to us-east-2.
+- athena:ListDatabases, athena:ListTableMetadata, athena:GetTableMetadata:
+  arn:aws:athena:us-east-2:704554708405:datacatalog/AwsDataCatalog, same region condition.
+
+IAM principal simulations: all five intended actions allowed; discovery in
+us-west-2 denied, metadata on UnapprovedCatalog denied, Glue DeleteTable on
+s04_wbr/weekly_metrics denied. These are IAM simulation results, not live console
+acceptance. Ohio discovery can reveal workgroup/catalog names; it does not grant
+query access outside the pre-existing S04-WBR policy. Glue database access remains
+as previously scoped. No DeleteTable, new keys, paid queries, model invocations,
+or data changes. Next: Lakshmi refreshes Athena in Ohio, selects S04-WBR, and
+confirms console access. Rollback if approved/needed: remove only this new inline
+policy, not existing managed or repair policies.
