@@ -65,7 +65,17 @@ def run_analyst_week(
     mapping populated by tool wrappers, outside model-generated text.
     Repeated tool names are allowed; request IDs and evidence refs are unique.
     """
-    response = run_analyst(week)
+    try:
+        response = run_analyst(week)
+    except Exception:
+        # Model/SDK initialization can fail before the analyst builds its envelope.
+        # Never retry here, invent evidence, or expose exception text (credentials
+        # and private request content can appear in provider exceptions).
+        response = {
+            "report_draft": None,
+            "evidence_log": {},
+            "run": {"status": "error", "error": "ANALYST_CALL_FAILED"},
+        }
     if not isinstance(response, Mapping):
         raise ContractError("analyst result must be a mapping")
     if "report_draft" not in response or "evidence_log" not in response:
