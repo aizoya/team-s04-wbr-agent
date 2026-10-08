@@ -73,18 +73,30 @@ def make_captured_verifier(week):
             series.extend(_series(envelope, metric, match["state"], match["category"], week))
         if not series:
             return fallback
-        changes = []
+        intervals = []
         for item in series:
             current, previous, change = (item.get(k) for k in ("current", "previous", "change"))
             if (item.get("change_type") != "pct" or item.get("data_issue")
                     or not all(_finite(v) for v in (current, previous, change))
                     or current < 0 or previous <= 0):
                 return {**fallback, "reason": "numeric evidence incomplete or malformed"}
-            calculated = (current - previous) / previous * 100
-            if not math.isfinite(calculated) or not math.isclose(calculated, change, rel_tol=1e-9, abs_tol=1e-6):
+            # Lakshmi's builder rounds current, previous and change separately
+            # to two decimals. Recomputing rounded inputs with an exact-value
+            # tolerance would falsely reject legitimate captures. Intersect
+            # the possible arithmetic range with the reported-change range.
+            c, p, delta = (Decimal(str(v)) for v in (current, previous, change))
+            half = Decimal("0.005")
+            if p <= half:
+                return {**fallback, "reason": "numeric rounding leaves denominator uncertain"}
+            lower = (max(Decimal(0), c - half) / (p + half) - 1) * 100
+            upper = ((c + half) / (p - half) - 1) * 100
+            lower, upper = max(lower, delta - half), min(upper, delta + half)
+            if lower > upper + Decimal("0.000001"):
                 return {**fallback, "reason": "numeric evidence is internally inconsistent"}
-            changes.append(change)
-        if any(not math.isclose(c, changes[0], rel_tol=1e-9, abs_tol=1e-6) for c in changes):
+            intervals.append((lower, upper))
+        lower = max(i[0] for i in intervals)
+        upper = min(i[1] for i in intervals)
+        if lower > upper + Decimal("0.000001"):
             return {**fallback, "reason": "conflicting numeric captures require review"}
         amount = Decimal(match["amount"])
         if amount < 0 or amount > 1000000:
@@ -93,9 +105,10 @@ def make_captured_verifier(week):
         half_unit = Decimal(1).scaleb(amount.as_tuple().exponent) / 2
         # Boundary ties are allowed conservatively; signed direction is checked
         # independently so a tiny rise cannot validate a rounded drop.
-        actual = Decimal(str(changes[0]))
-        direction_ok = actual < 0 if match["direction"] == "fell" else actual > 0
-        if not direction_ok or abs(actual - signed) > half_unit + Decimal("0.000001"):
+        direction_impossible = lower >= 0 if match["direction"] == "fell" else upper <= 0
+        epsilon = Decimal("0.000001")
+        if (direction_impossible or upper < signed - half_unit - epsilon
+                or lower > signed + half_unit + epsilon):
             return {"claim_id": claim["claim_id"], "outcome": "remove",
                     "reason": "claimed percentage contradicts scoped captured evidence"}
         return {**fallback, "reason": "numeric percentage matches; semantic/confidence review remains"}
