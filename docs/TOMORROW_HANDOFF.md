@@ -14,7 +14,7 @@ tests. It is stacked on PR #3 and PR #2. Do not copy only one branch's files or
 discard the lower-stack answer-key statement-binding fix. Follow normal team
 review and merge decisions; do not merge merely because tests pass.
 
-Latest local gate: 119 tests plus both synthetic demos PASS. Offline configuration
+Latest local gate: 123 tests plus both synthetic demos PASS. Offline configuration
 diagnostics and runner initialization recovery are implemented. See
 `docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md` for priorities and current AWS receipts. No real Olist,
 Strands, Athena or Bedrock runtime acceptance is established. No paid service
@@ -175,3 +175,19 @@ review/merge decisions, confidence-policy reconciliation and bounded spending
 approval where needed. No new paid Athena query, Bedrock invocation, permission
 change, merge, deployment or additional team communication was performed in
 this checkpoint. Final acceptance remains NO-GO until those gates are evidenced.
+
+## Offline acceptance hardening — October 8 afternoon
+
+Four adapter-path regression tests were added on the existing PR #4 branch,
+without runtime changes or edits to teammate components:
+empty drafts remain partial; error captures retaining stale references cannot
+support a keep outcome; verifier exceptions remove the claim and render once
+without replaying the analyst; duplicate expected-tool configuration cannot
+produce a complete report.
+
+Test commit: c5f996ae922fcf5f6ea9697434e57cf60f49dfe3; published file readback
+verified. python3 -m unittest discover -s tests: 123 tests, OK, exit 0.
+python3 scripts/verify.py: exit 0, QUALITY GATE PASS, including both synthetic
+complete/partial demos. These tests strengthen offline acceptance evidence only;
+real-data parity, live invocation, renderer integration and final approval
+remain outstanding. No paid workloads, permissions, merge or deployment.
