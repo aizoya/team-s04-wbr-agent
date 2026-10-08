@@ -224,3 +224,19 @@ Next: Lakshmi refreshes Athena in Ohio with S04-WBR selected and confirms whethe
 the left panel and s04_wbr dropdown now load. Stop and reconcile any new denied
 action before expanding permissions. Rollback if authorized: remove only the
 new dedicated inline policy.
+
+## Five-table catalog verification — October 8, approximately 4:19 PM Pacific
+
+Lakshmi confirmed that the Ohio Athena left panel now loads with S04-WBR selected,
+s04_wbr is selectable and five created tables appear. Read-only Glue GetTables
+independently verifies exactly weekly_metrics, weekly_category_metrics,
+order_facts, golden_weekly_metrics and golden_weekly_category_metrics, each an
+EXTERNAL_TABLE pointing to its agreed source/fixture S3 prefix. This supersedes
+the earlier zero-table observation. Schema/content/parity are not yet accepted.
+
+Athena GetWorkGroup verifies S04-WBR ENABLED, enforced results configuration,
+SSE_S3 and the existing 104857600-byte per-query scan cutoff. No query was run
+during verification. Lakshmi requests one reconciliation SELECT for counts,
+revenue totals and date ranges across these five tables; her scan/cost estimate
+is not independently measured. New spending approval remains pending. Do not
+infer authorization for retries, additional queries or Bedrock runs.
