@@ -135,3 +135,21 @@ in the PR description. Existing 119-test offline evidence remains unchanged; no
 new live tests, infrastructure mutation, paid workload or follow-up message.
 Submission NO-GO remains. Next dependency: teammate data/renderer receipts and
 review, followed by separately approved bounded live testing and acceptance.
+
+## Lakshmi Athena denial — October 8, 12:20 PM Pacific diagnosis
+
+Lakshmi reported inability to use the workgroup; this is now a confirmed active
+integration blocker, not merely missing execution evidence. Her current attached
+S04 policy contains the requested source/results S3 list/read/write, scoped Glue
+table create/read, and five Athena actions. IAM simulation allows those Athena
+actions for S04-WBR in us-east-2; simulation is not runtime acceptance.
+CloudTrail records aws-hackathon-s04-lakshmi GetWorkGroup AccessDenied at
+19:11:10 UTC in us-east-2 (event 6e6432e3-7113-4a81-9133-d2409fd0738c).
+Region mismatch is therefore ruled out for that recorded attempt. Request
+parameters/resource ARN were absent from the retrieved event, so the exact
+workgroup target and root cause remain unknown. Other-region/primary-workgroup
+simulations were implicitly denied, but do not prove she requested those targets.
+Next: exact selected workgroup/full error or a direct read-only GetWorkGroup test
+using her existing configured credentials. No new permissions, credentials or
+paid query were created. Proposed source and fixture table-prefix layout is
+compatible with the architecture; golden fixtures must remain separately labeled.
