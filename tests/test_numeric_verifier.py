@@ -58,6 +58,18 @@ class NumericVerifierTests(unittest.TestCase):
         self.env["data"]["change"] = -95
         self.assertIn("inconsistent", self.result()["reason"])
 
+    def test_independently_rounded_tool_values_are_not_false_inconsistency(self):
+        self.env["data"].update(current=10.91, previous=100.07, change=-89.10)
+        self.assertEqual(self.result()["outcome"], "remove")
+        self.assertIn("contradicts", self.result()["reason"])
+        self.claim["statement"] = "health_beauty revenue fell 89.1% in SP."
+        self.assertIn("matches", self.result()["reason"])
+
+    def test_rounding_uncertain_denominator_stays_reviewed(self):
+        self.env["data"].update(current=0.001, previous=0.001, change=0)
+        self.assertEqual(self.result()["outcome"], "flag")
+        self.assertIn("denominator uncertain", self.result()["reason"])
+
     def test_unrelated_number_does_not_count_as_support(self):
         self.env["data"]["z_score"] = 95
         self.assertEqual(self.result()["outcome"], "remove")
