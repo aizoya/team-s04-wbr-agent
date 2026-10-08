@@ -290,7 +290,7 @@ def run_wbr(
 
 def verify_and_render(
     tool_results, analyst, *, warnings, complete_tools,
-    verifier=None, renderer=None, label="SYNTHETIC",
+    verifier=None, renderer=None, label="SYNTHETIC", evidence_aliases=None,
 ) -> RunResult:
     """Shared verification boundary; never invokes or retries data tools."""
     warnings = list(warnings)
@@ -308,6 +308,13 @@ def verify_and_render(
 
     if duplicate_evidence_refs:
         complete_tools = False
+
+    for alias, captured in (evidence_aliases or {}).items():
+        if captured["status"] not in {"ok", "partial"}:
+            continue
+        if alias in evidence_by_ref:
+            raise ContractError("ambiguous evidence alias")
+        evidence_by_ref[alias] = captured
 
     valid_claims: list[dict[str, Any]] = []
     rejected_claims = 0
