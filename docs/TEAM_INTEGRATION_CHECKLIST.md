@@ -9,7 +9,10 @@ Franklyn's runner/verifier work is intended to be integration-ready before team 
 Latest draft: PR #4, `build/s04-analyst-loop-adapter-20261007`, stacked on PR #3
 and the original PR #2 runner branch. No merge or approval is implied.
 
-Latest local gate: 107 tests and both synthetic demos PASS. The nested analyst
+Latest local gate: 119 tests and both synthetic demos PASS. Offline settings diagnostics
+and privacy-safe analyst initialization recovery are also implemented.
+See `docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md` for the six-pillar assessment,
+read-only AWS evidence, costs, owner actions and submission NO-GO conditions. The nested analyst
 adapter, structured evidence/warnings, request-ID citations, causal-check repair,
 bounded numeric-contradiction gate and offline capture replay are implemented.
 See `docs/LAKSHMI_CONTRACT_INTEGRATION_2026-10-07.md` for limits and source blobs.
@@ -105,3 +108,16 @@ Still require explicit approval for:
 - submission;
 - merge if team review requirements are not met.
 
+
+## October 8 verified AWS checkpoint
+
+AWS plugin access restored; STS account/identity verified. S04 buckets have default
+encryption/public-access blocking; Athena enforces a 100 MiB scan cutoff. Source
+bucket currently contains only two zero-byte markers; Glue s04_wbr has zero tables.
+Nova Micro metadata reports available/authorized; runtime invocation remains
+untested. A budget email notification exists; remaining eligible credits are
+unknown. No new teammate emails or S04 channel messages were returned by the
+October 8 morning searches; this does not establish their current availability.
+Do not duplicate teammate uploads or infer completion. Final submission remains
+NO-GO until data/catalog parity, approved live evidence, renderer integration,
+reviewed verifier policy and reproducible demo acceptance are recorded.
