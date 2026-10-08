@@ -6,6 +6,7 @@ from typing import Mapping
 
 from .wbr_contract import ContractError
 from .wbr_runner import validate_tool_envelope, verify_and_render
+from .numeric_verifier import make_captured_verifier
 
 
 def normalize_captured_envelope(raw):
@@ -131,6 +132,6 @@ def run_analyst_week(
 
     return verify_and_render(
         envelopes, lambda _envelopes: claims, warnings=warnings,
-        complete_tools=complete, verifier=verifier, renderer=render_with_context,
+        complete_tools=complete, verifier=verifier or make_captured_verifier(week), renderer=render_with_context,
         label=label, evidence_aliases=aliases,
     )
