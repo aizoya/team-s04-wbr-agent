@@ -84,6 +84,46 @@ class AnalystAdapterTests(unittest.TestCase):
         response["evidence_log"][e["request_id"]] = e
         self.assertEqual(self.run_response(response).status, "partial")
 
+    def test_empty_draft_cannot_be_complete_even_with_successful_tools(self):
+        response = self.response()
+        response["report_draft"] = []
+        result = self.run_response(response)
+        self.assertEqual(result.status, "partial")
+        self.assertFalse(result.claims)
+        self.assertEqual(len(result.tool_results), 1)
+
+    def test_failed_capture_with_stale_refs_cannot_support_keep(self):
+        response = self.response()
+        captured = next(iter(response["evidence_log"].values()))
+        captured.update(status="error", error="query failed")
+        # Some providers retain data/refs on an error. Neither becomes proof.
+        result = self.run_response(
+            response, verifier=lambda c, e: {"claim_id": c["claim_id"], "outcome": "keep"})
+        self.assertEqual(result.status, "partial")
+        self.assertFalse(result.claims)
+        self.assertEqual(result.removed_claims[0]["verifier_outcome"], "remove")
+
+    def test_verifier_failure_still_renders_once_without_replaying_analyst(self):
+        response = self.response()
+        calls, renders = [], []
+        def verifier(claim, evidence):
+            raise RuntimeError("synthetic verifier failure")
+        result = run_analyst_week(
+            "2018-08-13", lambda week: (calls.append(week) or response),
+            expected_tool_names=["weekly_revenue"], verifier=verifier,
+            renderer=lambda payload: renders.append(payload))
+        self.assertEqual(calls, ["2018-08-13"])
+        self.assertEqual(len(renders), 1)
+        self.assertEqual(result.status, "partial")
+        self.assertEqual(result.removed_claims[0]["verifier_reason"], "verifier failure")
+
+    def test_duplicate_expected_tool_configuration_never_completes(self):
+        result = run_analyst_week(
+            "2018-08-13", lambda week: self.response(),
+            expected_tool_names=["weekly_revenue", "weekly_revenue"],
+            verifier=lambda c, e: {"claim_id": c["claim_id"], "outcome": "keep"})
+        self.assertEqual(result.status, "partial")
+
 
 if __name__ == "__main__":
     unittest.main()
