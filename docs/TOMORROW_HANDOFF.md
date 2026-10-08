@@ -1,7 +1,7 @@
 # S04: execution handoff for October 8
 
 Internal finish target: October 8, 2026, 11:59 a.m. Pacific. Franklyn intends to
-drive tomorrow; use this handoff to minimize founder technical work. It is not
+drive while teammates execute; use this handoff to minimize founder technical work. It is not
 an assertion that the project is done, a merge authorization, or permission
 to spend beyond existing approvals. Proposed ownership does not prove teammate
 acceptance.
@@ -14,7 +14,9 @@ tests. It is stacked on PR #3 and PR #2. Do not copy only one branch's files or
 discard the lower-stack answer-key statement-binding fix. Follow normal team
 review and merge decisions; do not merge merely because tests pass.
 
-Latest local gate: 107 tests plus both synthetic demos PASS. No real Olist,
+Latest local gate: 119 tests plus both synthetic demos PASS. Offline configuration
+diagnostics and runner initialization recovery are implemented. See
+`docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md` for priorities and current AWS receipts. No real Olist,
 Strands, Athena or Bedrock runtime acceptance is established. No paid service
 call or deployment was performed for this handoff.
 
@@ -104,3 +106,16 @@ review approval, live acceptance, submitted status or completed integration
 without evidence. Reply with one concise decision and exact options if founder
 action is needed; otherwise keep routine technical execution with the two
 teammates. No founder action is currently needed merely to read this handoff.
+
+## October 8 verified AWS checkpoint
+
+AWS plugin access restored; STS account/identity verified. S04 buckets have default
+encryption/public-access blocking; Athena enforces a 100 MiB scan cutoff. Source
+bucket currently contains only two zero-byte markers; Glue s04_wbr has zero tables.
+Nova Micro metadata reports available/authorized; runtime invocation remains
+untested. A budget email notification exists; remaining eligible credits are
+unknown. No new teammate emails or S04 channel messages were returned by the
+October 8 morning searches; this does not establish their current availability.
+Do not duplicate teammate uploads or infer completion. Final submission remains
+NO-GO until data/catalog parity, approved live evidence, renderer integration,
+reviewed verifier policy and reproducible demo acceptance are recorded.
