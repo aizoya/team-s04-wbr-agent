@@ -199,3 +199,28 @@ as previously scoped. No DeleteTable, new keys, paid queries, model invocations,
 or data changes. Next: Lakshmi refreshes Athena in Ohio, selects S04-WBR, and
 confirms console access. Rollback if approved/needed: remove only this new inline
 policy, not existing managed or repair policies.
+
+## Approved Glue catalog console read repair — October 8, 4:10 PM Pacific
+
+Lakshmi reports that the workgroup list now loads and S04-WBR can be selected:
+this is teammate-reported confirmation of the earlier Athena discovery repair.
+The left panel then denies glue:GetCatalogs on the Ohio account catalog. Her
+forwarded message contains an unresolved selectable/not-selectable placeholder;
+database dropdown usability is therefore unknown.
+
+Franklyn approved the proposed two-action addition at 4:10 PM Pacific ("A").
+Account/target IAM user verified; a dedicated previously absent inline policy
+S04-WBR-Lakshmi-GlueCatalogReadOnly-20261008 was applied to
+aws-hackathon-s04-lakshmi. Existing policies preserved. Exact grant:
+glue:GetCatalogs and glue:GetCatalog, resource
+arn:aws:glue:us-east-2:704554708405:catalog, with aws:RequestedRegion us-east-2.
+PutUserPolicy succeeded and GetUserPolicy matched the proposed JSON.
+
+IAM principal simulations allow both actions on the Ohio account catalog;
+deny both on us-west-2 and another account; Glue DeleteTable remains denied.
+Simulation is not live console acceptance. No query/write/delete permissions,
+keys, paid query/model call or data/catalog mutation were added/performed.
+Next: Lakshmi refreshes Athena in Ohio with S04-WBR selected and confirms whether
+the left panel and s04_wbr dropdown now load. Stop and reconcile any new denied
+action before expanding permissions. Rollback if authorized: remove only the
+new dedicated inline policy.
