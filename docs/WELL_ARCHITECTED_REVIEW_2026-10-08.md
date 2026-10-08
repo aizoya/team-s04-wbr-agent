@@ -304,3 +304,30 @@ requires a finite query/attempt plan and separate total ceiling approval; six
 Nova Micro scenarios require the exact bounded plan and separate approval.
 Keep Lambda/EventBridge deployment as post-submission work, not an in-flight
 architecture change.
+
+## Approved same-device temporary login enablement — October 8, 4:54 PM Pacific
+
+Franklyn approved ("A") adding the proposed two sign-in actions and sending
+Lakshmi the instructions. Target account/user verified; previously absent inline
+policy S04-WBR-Lakshmi-LocalLogin-20261008 applied with exact actions
+signin:AuthorizeOAuth2Access and signin:CreateOAuth2Token, resource
+arn:aws:signin:us-east-2:704554708405:oauth2/public-client/localhost,
+StringEquals aws:RequestedRegion us-east-2. PutUserPolicy succeeded and readback
+matched. Principal simulations allow both same-device Ohio actions; deny remote
+public client and us-west-2. Existing service policies preserved; no permanent
+key created, no SSO/role/infrastructure setup or live invocation.
+
+Authorized instructions sent as a reply to Lakshmi's authentication DM:
+https://awsusers.slack.com/archives/D0C78HS1Z50/p1791503705107929?thread_ts=1791503449.478859&cid=D0C78HS1Z50
+Instructions include CLI >=2.32.0, s04-login profile in Ohio, own-user/account
+identity verification, older-SDK credential_process compatibility, private cache/
+credential handling and logout. CLI/SDK version and actual login remain unverified.
+No root/admin credentials to be used. Remote login or different region would
+require reconciliation, not silent policy expansion. Rollback if authorized:
+remove only this dedicated inline policy.
+
+Authentication approval does not authorize paid tool-parity or Bedrock batches.
+Requested finite Athena cases/query-attempt counts including retries and a
+separate six-scenario model plan with token/tool-call limits before approval.
+Lambda/EventBridge deferred. This supersedes the earlier unauthorised proposal
+status for these exact login actions only.
