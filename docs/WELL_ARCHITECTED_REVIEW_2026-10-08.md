@@ -260,3 +260,47 @@ runtime, output totals/date ranges and DuckDB comparison, excluding credentials
 and raw private rows. Lakshmi's USD0.00005 estimate is unverified; measured cost
 and query acceptance are not established. This record is approval, not an
 execution receipt. Assistant has not executed the query.
+
+## Reconciliation receipt and laptop authentication proposal — October 8 afternoon
+
+Approved single SELECT executed once in S04-WBR, s04_wbr; query ID
+b3083bf1-2b61-43e2-8d32-fdfba4c8ff3a, SUCCEEDED, submitted 23:26:12.773 UTC,
+completed 23:26:13.721 UTC. Read-only GetQueryExecution and GetQueryResults verify
+1,161,647 bytes scanned, 817 ms engine time, 948 ms total time, and five aggregate
+rows. Correctly distinguish engine time from total latency. This consumes the
+one-execution authorization; it does not authorize subsequent paid calls.
+Billed dollar cost is not independently verified.
+
+Athena results (row count / rounded revenue):
+weekly_metrics 730 / 13492730.31;
+weekly_category_metrics 9467 / 13492730.31;
+order_facts 99441 / 13591643.70;
+golden_weekly_metrics 729 / 13460585.94;
+golden_weekly_category_metrics 9467 / 13470166.86.
+Revenue sums differ across raw/aggregate/golden tables; these are different
+semantics and planted fixtures, not an assertion they should equal each other.
+Lakshmi reports exact per-table DuckDB parity and correct timestamps; her
+local DuckDB counterpart is not independently replayed in this checkpoint.
+Whole-table ranges extend outside the canonical analysis window: tool validation
+must separately demonstrate correct requested-window filtering.
+
+Programmatic-access inspection: Lakshmi has zero access keys; no S04 assumable
+developer role is present in the returned six-role inventory; IAM Identity Center
+ListInstances in Ohio returns none. Attached policies do not include the AWS
+local-development sign-in policy. Never reuse VisionProof roles or admin keys.
+
+AWS official CLI documentation supports console-based aws login (CLI >=2.32.0)
+for IAM users, with temporary auto-refreshing credentials and an older-SDK
+credential_process compatibility route. Official managed-policy reference lists
+signin:AuthorizeOAuth2Access and signin:CreateOAuth2Token. Proposed narrow
+same-device grant targets arn:aws:signin:us-east-2:704554708405:oauth2/public-client/localhost.
+This is a PROPOSAL, not applied or authorized; actual CLI/SDK versions and local
+login acceptance remain unknown. Sources:
+https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html
+https://docs.aws.amazon.com/aws-managed-policy/latest/reference/SignInLocalDevelopmentAccess.html
+
+Next paid steps remain proposals: three-tool Athena parity on real/golden data
+requires a finite query/attempt plan and separate total ceiling approval; six
+Nova Micro scenarios require the exact bounded plan and separate approval.
+Keep Lambda/EventBridge deployment as post-submission work, not an in-flight
+architecture change.
