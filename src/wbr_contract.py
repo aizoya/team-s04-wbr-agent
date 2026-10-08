@@ -36,6 +36,7 @@ CAUSAL_PATTERNS = [
     r"\bresult(?:s|ed|ing)? (?:in|from)\b",
     r"\bas a result of\b",
     r"\bdriven by\b",
+    r"\bdrove\b",
     r"\battribut(?:ed|able) to\b",
     r"\bstemming from\b",
 ]
@@ -88,20 +89,8 @@ def reconcile_total(headline: float, parts: Iterable[Any], label: str, tolerance
 def guard_noncausal(text: str) -> None:
     lowered = text.lower().strip()
 
-    if lowered.endswith("?"):
-        return
-
-    safe_meta_phrases = (
-        "does not establish",
-        "does not prove",
-        "does not show",
-        "cannot establish",
-        "cannot conclude",
-        "no evidence",
-    )
-    if any(phrase in lowered for phrase in safe_meta_phrases):
-        return
-
+    # A question mark or disclaimer elsewhere is not evidence for a causal
+    # assertion. Conservatively route ambiguous causal text for review too.
     for pattern in CAUSAL_PATTERNS:
         if re.search(pattern, lowered):
             raise ContractError("unsupported causal language detected")
@@ -195,3 +184,4 @@ def external_to_metric(payload: Mapping[str, Any]) -> Metric:
         evidence_ref=refs[0] if refs else None,
         caveat="; ".join(warnings) if warnings else None,
     )
+
