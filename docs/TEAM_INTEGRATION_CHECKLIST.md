@@ -4,13 +4,21 @@ Internal finish: October 8, 2026, 11:59 a.m. Pacific
 
 Franklyn's runner/verifier work is intended to be integration-ready before team inputs arrive.
 
-## Franklyn — complete on branch
+## Franklyn — local implementation ready; final acceptance still open
 
-Branch: `build/franklyn-runner-verifier-v2`
+Latest draft: PR #4, `build/s04-analyst-loop-adapter-20261007`, stacked on PR #3
+and the original PR #2 runner branch. No merge or approval is implied.
+
+Latest local gate: 95 tests and both synthetic demos PASS. The nested analyst
+adapter, structured evidence/warnings, request-ID citations, causal-check repair,
+bounded numeric-contradiction gate and offline capture replay are implemented.
+See `docs/LAKSHMI_CONTRACT_INTEGRATION_2026-10-07.md` for limits and source blobs.
+Correct numeric matches and unknown prose remain reviewed, not automatically
+kept. Real-data semantic verification is NOT complete.
 
 Ready:
 - strict complete/partial rules;
-- evidence-aware verifier;
+- fail-closed fallback verifier and bounded numeric contradiction check;
 - unsupported-causal-language guard;
 - one-retry failure handling;
 - explicit internal/external metric adapter;
@@ -23,18 +31,26 @@ Ready:
 - founder-only AWS bootstrap packet in `docs/AWS_LAKSHMI_BOOTSTRAP.md`;
 - real-Olist acceptance harness in `demo/run_real_olist_acceptance.py`.
 
-No additional Franklyn-side feature work should be needed before team integration unless a teammate exposes an interface mismatch.
+Still owed by Franklyn: real capture replay, a reviewed semantic verifier that can
+justify keep outcomes, confidence-policy reconciliation, renderer binding,
+integrated failure/partial tests and final reproducible demo acceptance.
 
 ## Lakshmi — integration handoff needed
 
-Provide:
-- final tool names if different from the temporary runner configuration;
-- final tool-specific `data` payload shapes;
-- final `evidence_refs` structure;
+Already inspected: `work/Lakshmi-data-tools` source and authored golden answer
+keys. Tool names are `get_weekly_metric`, `get_breakdown`, `get_delivery_signals`;
+structured refs/warnings and nested analyst shape are supported locally. Her
+reported 18 real-data checks and 9 offline tests are not our independently
+replayed AWS acceptance.
+
+Still provide:
 - representative successful tool envelopes;
 - representative partial/error envelopes;
-- planted scenarios and answer keys;
 - real Olist/Athena outputs for acceptance.
+
+AWS console profile and narrow permission repair were completed; successful
+teammate sign-in/reset, SDK authentication and service smoke tests remain
+unconfirmed. No credentials belong in fixtures, Git or group messages.
 
 Finalized metric semantics are now canonical in `docs/METRIC_CONTRACT.md`.
 
@@ -54,10 +70,14 @@ The current deterministic example is `fixtures/renderer_input_complete.json`.
 ## Integration sequence
 
 1. Validate Lakshmi envelopes without changing their data payload semantics.
-2. Bind Maxime's renderer callback to `run_wbr(..., renderer=...)`.
+2. Bind Maxime's renderer callback to `run_analyst_week(..., renderer=...)` for
+   captured analyst-loop runs; keep `run_wbr` for the original tool orchestration.
 3. Run `python3 scripts/verify.py`.
 4. Run synthetic complete and partial integration.
-5. Run planted-scenario acceptance on real Olist weeks with `demo/run_real_olist_acceptance.py`.
+5. Replay saved nested responses with `demo/run_captured_analyst.py`; numeric
+   contradictions must be removed, and unknown semantics must remain reviewed.
+   Use `demo/run_real_olist_acceptance.py` only with independently trusted exact
+   answer-key statements, never answer keys generated from claims under test.
 6. Run the real 2018-08-20 incomplete-week case and independent-tool-failure case.
 7. Run real-data/Athena parity acceptance.
 8. Record mocked/local evidence separately from real AWS evidence.
@@ -67,7 +87,7 @@ The current deterministic example is `fixtures/renderer_input_complete.json`.
 ## Human/team decisions still open
 
 Do not silently freeze:
-- final `evidence_refs` structure;
+- final review of the already-inspected structured evidence contract;
 - confidence policy;
 - any future tool-specific payload fields not covered by the metric contract.
 
@@ -80,3 +100,4 @@ Still require explicit approval for:
 - public repository publication;
 - submission;
 - merge if team review requirements are not met.
+
