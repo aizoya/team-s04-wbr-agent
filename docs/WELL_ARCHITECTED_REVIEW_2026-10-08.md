@@ -105,3 +105,20 @@ Resource observations above come from successful read-only API receipts, not doc
 ## Follow-up runner reliability fix — October 8
 
 Franklyn-owned adapter now catches ordinary exceptions raised by the single analyst call (including model initialization before the analyst's own try block) and returns a partial report with empty evidence and the fixed code ANALYST_CALL_FAILED. It does not retry or copy exception text. Malformed returned contracts still fail validation; KeyboardInterrupt remains interruptible. Lakshmi's agent source is unchanged. Three added tests exercise these boundaries and renderer invocation; final local gate: **119 tests + both synthetic demos PASS**, scripts/verify.py exit 0. The earlier 116-test observation is the diagnostics-only checkpoint. AWS data, paid live run, credits, renderer and review blockers remain unchanged. Canonical tracking update: runner initialization recovery implemented and tested on PR #4; no paid calls, merge or deployment.
+
+## Team communication and ownership reconciliation — October 8
+
+Authorized status email sent from franklyn@aizoya.com to Lakshmi Bharathy Kumar
+and Maxime Gillot; Outlook send action returned success (Sent Items search may
+lag and did not yet return the new message). Slack update posted successfully:
+https://awsusers.slack.com/archives/C0C648P9SV8/p1791478412697219
+No credentials included. Requested branch/commit, completed items, blockers and
+ETA; preserved separate spending, permissions, merge and submission gates.
+
+Recipient-history verification found Maxime's October 4 email explicitly
+accepting final report/output-layer ownership, tests, integration support and
+README. This corrects any earlier wording that his renderer ownership itself
+was unconfirmed. His current renderer implementation/delivery remains unverified;
+acceptance of the newer expanded coordination proposal is not assumed. Lakshmi's
+October 7 report confirms her data/agent work and pending AWS integration.
+No new teammate acknowledgement of today's handoff is established.
