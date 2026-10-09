@@ -1,6 +1,42 @@
-# S04: execution handoff for October 8
+# S04: execution handoff — current October 9 checkpoint
 
-Internal finish target: October 8, 2026, 11:59 a.m. Pacific. Franklyn intends to
+## Current status — October 9, 2026, 11:28 AM Pacific
+
+- Data foundation: five uploaded Parquet objects and five Glue tables verified.
+  Console access confirmed by Lakshmi; temporary CLI/boto3 sign-in is teammate-
+  reported successful. No permanent access keys were created for this work.
+- Athena tool parity: published evidence contains 13/13 equal normalized
+  DuckDB/Athena comparisons. AWS independently confirms the 11 recorded queries
+  succeeded: 636,489 scanned bytes and 5,175 engine ms. Local elapsed 98.3 s
+  and USD0.000525 query cost are reported/estimated, not an invoice or local
+  independent replay. Preserve the existing file; no parity rerun is needed.
+- Approval timing exception: parity query timestamps are October 9 morning,
+  outside the prior October 8 expiry. No renewal is established; reconcile
+  separately without invalidating the technical evidence or claiming approval.
+- Bedrock: one six-scenario batch (S1/S2/S3/S4/S5/S7, one trial each) approved
+  with USD0.75 total incremental ceiling, ending after one batch or October 9,
+  11:59 PM Pacific. S1 first; stop on unexpected failure. This is conditional
+  on verified code guards before execution, not a service-enforced dollar cap.
+- MUST FIX before live batch: next-call token/cost reservation, global finite
+  model attempt accounting including retries, stop on graded failures, and
+  per-run raw evidence_log plus individual query receipts in saved JSON.
+  Existing published evaluator does not yet prove these conditions.
+  Lakshmi owns her corrections; no source changes made on her branch.
+- Nova Micro US profile is ACTIVE; scoped IAM simulation permits the requested
+  invocation actions and all three destination models. Live invocation is
+  untested; do not expand permissions without an actual scoped denial/approval.
+- Maxime: renderer callable, immutable handoff commit, report tests and final
+  instructions still need receipt/review. Existing output-layer ownership is
+  confirmed; do not duplicate or override in-flight implementation.
+- Franklyn: review guards/real captures, reconcile verifier/confidence policy,
+  bind reviewed renderer, accept complete/partial/error demonstrations, and
+  follow team review/merge/submission gates. Full submission remains NO-GO.
+
+Authoritative details and source blobs:
+docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md.
+Previous dated checkpoints are historical, not current-state assertions.
+
+Original internal finish target (missed): October 8, 2026, 11:59 a.m. Pacific. Franklyn intends to
 drive while teammates execute; use this handoff to minimize founder technical work. It is not
 an assertion that the project is done, a merge authorization, or permission
 to spend beyond existing approvals. Proposed ownership does not prove teammate
@@ -16,17 +52,18 @@ review and merge decisions; do not merge merely because tests pass.
 
 Latest local gate: 123 tests plus both synthetic demos PASS. Offline configuration
 diagnostics and runner initialization recovery are implemented. See
-`docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md` for priorities and current AWS receipts. No real Olist,
-Strands, Athena or Bedrock runtime acceptance is established. No paid service
+`docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md` for priorities and current AWS receipts. Athena tool parity is now verified as scoped below; full real Olist/Strands/
+Bedrock/renderer runtime acceptance is not established. No paid service
 call or deployment was performed for this handoff.
 
 ## Lakshmi: own the data/agent acceptance handoff
 
-1. Confirm console reset, local SDK authentication, exact source/results bucket,
-   s04_wbr catalog and S04-WBR workgroup. Do not share credentials in Git/chat.
-2. Complete the source upload/catalog and Athena parity checks under the existing
-   approved scope. Use us-east-2 and us.amazon.nova-micro-v1:0; no silent model
-   fallback or expanded permissions.
+1. Preserve completed source/catalog/parity receipts and existing temporary
+   authentication. Do not share credentials or repeat the parity batch.
+2. Correct and test the published live-evaluation guard/evidence gaps, share the
+   immutable commit/command, then execute only within the conditional October 9
+   six-scenario/USD0.75 authorization. Use us-east-2 and
+   us.amazon.nova-micro-v1:0; no silent fallback or expanded permissions.
 3. Save representative analyst responses with their request-ID evidence logs:
    planted complete scenario, incomplete 2018-08-20, failed review query,
    unsupported causal wording and the V2 unsupported percentage. Keep actual
@@ -107,7 +144,7 @@ without evidence. Reply with one concise decision and exact options if founder
 action is needed; otherwise keep routine technical execution with the two
 teammates. No founder action is currently needed merely to read this handoff.
 
-## October 8 verified AWS checkpoint
+## October 8 morning AWS checkpoint — historical
 
 AWS plugin access restored; STS account/identity verified. S04 buckets have default
 encryption/public-access blocking; Athena enforces a 100 MiB scan cutoff. Source
