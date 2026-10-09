@@ -363,3 +363,58 @@ comparison, all query IDs/attempts including failures/retries, bytes scanned,
 engine/total/elapsed times, errors, cap behavior and priced-vs-unknown costs.
 Bedrock six-scenario plan remains separately gated. Assistant did not execute
 the batch; completion and parity are not yet verified.
+
+
+## October 9, 2026 — parity evidence reconciliation and bounded Bedrock approval
+
+Independent read-only verification: runs/athena_parity_20261009_103840.json
+on work/Lakshmi-data-tools, blob 6f8f085c31acf0472cbd035d67d6c29896af9fc9,
+contains 13 cases; all stored DuckDB/Athena normalized envelopes compare equal.
+AWS GetQueryExecution independently confirms the 11 recorded execution IDs
+SUCCEEDED with matching bytes/engine times: 636,489 bytes and 5,175 engine ms.
+File reports 98.3 s local elapsed and USD0.000525 estimated Athena cost, not
+invoiced cost. Local DuckDB was not independently replayed.
+
+Timing exception: AWS submissions occurred October 9, 10:37–10:38 AM Pacific,
+after the October 8, 11:59 PM approval expiry. No renewal is established in
+the reviewed records. Preserve test evidence; do not retroactively describe
+the run as within the approval window. Reconciliation remains open.
+
+Franklyn explicitly approved ("Approve", October 9 at 11:23:46 AM Pacific)
+the revised one-time USD0.75 total incremental ceiling for six live scenarios:
+S1, S2, S3, S4, S5, S7, one trial each. Lakshmi owns execution. S1 runs first;
+stop the entire batch on any unexpected failure. Backend Athena golden tables;
+account 704554708405; source endpoint us-east-2; S04-WBR/s04_wbr; model/profile
+us.amazon.nova-micro-v1:0. US cross-region routing is within this scope.
+
+Pre-execution condition: identify branch/commit/command and verify deterministic
+guards for model attempts including SDK retries, cumulative input/output tokens,
+tool calls, Athena attempts, timeouts, and next-call cost reservation. A
+documented limit is not verified enforcement. Confirm the exact finite model
+attempt ceiling before execution. Per run: 25 tool calls, 300,000 cumulative
+input+output tokens, max 2,000 output tokens per response. Do not start a call
+that can exceed the reserved run/batch budget. Batch: max 300 Athena start
+attempts including all retries; preserve existing 100 MiB/query cutoff.
+USD0.75 includes Bedrock, Athena, associated S3 requests/results and retries;
+this is founder authorization, not an AWS hard-dollar service cap.
+
+The proposed USD0.014 Athena worst case was minimum-billing based, not a maximum:
+300 x 100 MiB at approximately USD5/TB is approximately USD0.16 before S3.
+Lakshmi's USD0.47 Bedrock estimate remains a projection, not independently
+verified runtime enforcement or invoice.
+
+Read-only GetInferenceProfile confirms ACTIVE US Nova Micro and destination
+models in us-east-1/us-east-2/us-west-2. IAM simulation for Lakshmi allows
+InvokeModel and InvokeModelWithResponseStream on the exact Ohio account profile
+and all three destination model ARNs, using requested-region Ohio context.
+Simulation does not prove successful live invocation or override organization/
+session controls. No permission expansion or model invocation performed.
+
+Approval expires after the single batch or October 9, 11:59 PM Pacific,
+whichever first. No extra trials/reruns, model substitution, DDL/data writes,
+new permissions or deployment. Stop on access denial, uncertain execution,
+missing cost accounting or cap risk; request renewed approval for changed scope.
+Save scenario-level expected/actual verdicts, raw request_id evidence envelopes,
+model request counts/IDs and token usage, query IDs/attempts/bytes, engine/total/
+elapsed times, errors and estimated-vs-unknown costs. Full submission acceptance
+remains pending live agent/verifier/renderer integration and final demonstration.
