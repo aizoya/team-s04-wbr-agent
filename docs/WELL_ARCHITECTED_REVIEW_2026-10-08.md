@@ -331,3 +331,35 @@ Requested finite Athena cases/query-attempt counts including retries and a
 separate six-scenario model plan with token/tool-call limits before approval.
 Lambda/EventBridge deferred. This supersedes the earlier unauthorised proposal
 status for these exact login actions only.
+
+## Approved Athena tool-parity batch — October 8, 5:57 PM Pacific
+
+Lakshmi confirms AWS CLI 2.37.11 login and Python boto3 s04-sdk compatibility
+profile both identify account 704554708405 and aws-hackathon-s04-lakshmi.
+This is teammate-reported laptop/SDK authentication acceptance, not independently
+executed on her laptop. No project dependencies changed, per her report.
+
+Franklyn approved ("A") one execution of the exact 13-case parity batch today,
+October 8 Pacific, with a USD0.02 total incremental exposure ceiling, including
+Athena and associated S3 requests/result handling. Scope: us-east-2, S04-WBR,
+s04_wbr, existing real and golden tables, get_weekly_metric/get_breakdown/
+get_delivery_signals compared with DuckDB. Three real cases use 2018-03-12;
+golden S1/S2/S3/S4/S6/S7/S8/S10 each send one query; S5 simulated failure and
+S9 invalid input send zero queries. Eleven planned queries, hard maximum
+22 StartQueryExecution attempts including retries, no extra batches or reruns.
+S5/S9 must not reach Athena. Script cap enforcement is Lakshmi-reported, not
+independently inspected code enforcement.
+
+Existing 100 MiB per-query workgroup cutoff remains. Total ceiling is founder
+authorization, not a verified AWS hard-dollar enforcement control. Her ~$0.001
+projection assumes minimum billing per query and is not a maximum-cost proof.
+Stop before exceeding the attempt/spending cap, on access denial, uncertain
+execution status or unplanned scope; no ad hoc retry or permission expansion.
+Expire after the single batch or October 8, 11:59 PM Pacific, whichever first.
+
+No Bedrock calls, DDL/write operations, deployment or new permissions authorized.
+Required receipt: reviewed branch/commit and command, case-level DuckDB/Athena
+comparison, all query IDs/attempts including failures/retries, bytes scanned,
+engine/total/elapsed times, errors, cap behavior and priced-vs-unknown costs.
+Bedrock six-scenario plan remains separately gated. Assistant did not execute
+the batch; completion and parity are not yet verified.
