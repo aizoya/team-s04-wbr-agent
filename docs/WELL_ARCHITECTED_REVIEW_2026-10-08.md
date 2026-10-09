@@ -449,3 +449,42 @@ Sent targeted preflight findings in existing approval thread:
 https://awsusers.slack.com/archives/D0C78HS1Z50/p1791570422540469
 No new permission, paid execution, teammate-branch mutation or merge.
 At this checkpoint no new Maxime handoff appeared in the latest S04 channel.
+
+
+## October 9, 1:33 PM Pacific — review of Lakshmi guard update
+
+Reviewed immutable commit d23cb42bab0683e420a4792b8fd321c6e2097f15 on
+work/Lakshmi-data-tools. Exact scenario selection/order, stop on graded failure,
+model retry disabling, 30 per-run model attempt limit and saved raw evidence/
+query receipts now exist in code. Proposed execution remains the same six
+one-trial scenarios; USD0.70 internal ledger is below USD0.75 authorization.
+26/26 model-free tests (17 guard tests) are teammate-reported only: current
+review runtime has pytest but lacks Strands, DuckDB and boto3, so full suite
+was not independently executed and no dependencies were installed.
+
+MUST FIX before conditional live batch:
+1. agent/steering.py uses JSON characters/2.5 and projected input estimates;
+   neither establishes a model-specific upper bound for the actual request.
+   Post-call over-reservation halt cannot prevent a paid/token-cap overshoot.
+   Require supported exact counting or defensible request upper bounds,
+   including all relevant schemas; fallback is full-context reservation.
+2. tools/backend.py FAILED/CANCELLED branch substitutes zero for missing scan
+   stats, settles the minimum and may retry. Missing/invalid terminal accounting
+   must retain the full reservation and halt; over-reservation stats also need
+   fail-closed accounting. Request targeted missing-stat and underestimate tests.
+
+Independent isolated reproduction executed only the published pure-Python
+tools/budget.py Ledger: reserve USD0.001 under a USD0.70 ceiling, then settle
+USD0.701. Ledger committed amount exceeds ceiling and halted remains None.
+This confirms settlement itself does not enforce the ceiling when a reservation
+underestimates actual cost; it does not simulate or incur an AWS charge.
+
+Additional limitation: 900-second timer triggers wrap-up and can allow another
+model call, so it is a soft investigation threshold, not a hard wall-clock
+deadline. Separate client request timeouts are configured.
+
+Sent precise review to Lakshmi in existing approval thread:
+https://awsusers.slack.com/archives/D0C78HS1Z50/p1791578016312989
+No authorization expansion, paid execution, full-suite pass claim, merge,
+dependency installation or teammate-source mutation. Conditional gate remains
+open for corrected immutable commit and targeted test evidence.
