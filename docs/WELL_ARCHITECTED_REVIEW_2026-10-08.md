@@ -488,3 +488,43 @@ https://awsusers.slack.com/archives/D0C78HS1Z50/p1791578016312989
 No authorization expansion, paid execution, full-suite pass claim, merge,
 dependency installation or teammate-source mutation. Conditional gate remains
 open for corrected immutable commit and targeted test evidence.
+
+
+## October 9, 3:44 PM Pacific — conditional batch preflight cleared
+
+Reviewed immutable fc40b9f925c33d03e9f817ac3e38773fdc97c944.
+Both outstanding guards corrected in published code: full 128,000 context +
+2,000 output reservation before each model call; missing/invalid/over-bound
+Athena scan accounting retains full reservation, halts, and cannot retry.
+Sequential tool executor added; evidence checkpointed after every run.
+900 s limit explicitly soft, with separate per-request timeouts. AWS official
+Nova Micro card confirms 128K context:
+https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-micro.html
+
+Independent 8/8 isolated checks passed on published production functions with
+fake dependencies: full-context reservation ignoring low projected estimate;
+refusal before sending when next full reservation cannot fit; missing stats in
+FAILED/CANCELLED/SUCCEEDED; negative and bool stats; scan over 100 MiB. Each
+Athena unsafe case retains full reservation and a subsequent start is blocked.
+AST import stripping/fake dependencies were used because SDK/Strands/DuckDB
+are unavailable; this is not a full service/SDK integration test or full-suite
+pass. Lakshmi reports 36/36 laptop model-free tests, 27 guard tests.
+
+Confirmed go-ahead to Lakshmi within EXISTING October 9 USD0.75 authorization,
+not new spend/permission authority. Exact commit above; one six-scenario,
+one-trial batch; USD0.70 internal ledger; S1 first; preserve all current caps,
+region/model/workgroup/database/golden settings and no reducing context/prices.
+Stop on unexpected failure/uncertain execution/missing accounting/cap risk;
+no automatic rerun. Expiry remains October 9, 11:59 PM Pacific or single-batch
+completion, whichever first. No separate gate between successful S1 and remaining
+five was added. Request S1 verdict/usage and final committed raw evidence JSON.
+Slack persisted receipt:
+https://awsusers.slack.com/archives/D0C78HS1Z50/p1791585841846909
+
+Lakshmi acknowledged the parity run exceeded yesterday's expiry and that no
+separate renewal existed (October 9, 1:25:56 PM DM). Record exception separately;
+do not rewrite prior authorization or discard valid technical evidence.
+
+Live execution, full agent/verifier/renderer acceptance and submission remain
+unverified. Assistant did not invoke models, start queries, change permissions,
+merge, or alter teammate source.
