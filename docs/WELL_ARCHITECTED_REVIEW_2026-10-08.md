@@ -418,3 +418,34 @@ Save scenario-level expected/actual verdicts, raw request_id evidence envelopes,
 model request counts/IDs and token usage, query IDs/attempts/bytes, engine/total/
 elapsed times, errors and estimated-vs-unknown costs. Full submission acceptance
 remains pending live agent/verifier/renderer integration and final demonstration.
+
+
+## October 9 — model-free published-code preflight review
+
+MUST FIX BEFORE LIVE BATCH: reviewed published Lakshmi branch files without
+changing teammate source or executing the agent:
+- agent/steering.py blob 757b76b24d7bc5affd51cf7a2be18f3cf692856a checks
+  accumulated usage rather than reserving the next call; explicitly permits
+  a final call past token cap. No next-call reservation proven here.
+- agent/analyst.py blob 33003da7b74671e6f2aad8a29a193f0acb286b20 configures
+  40 turns and an additional five-turn finalization invocation. This is not
+  proof of a global model-attempt cap including SDK-level retries.
+- scripts/evaluate_agent.py blob 839abfca66b4a12eed29e2eda6889e52d89e843a
+  stops on run.status error only; a graded scenario failure can continue.
+  Saved evaluation runs omit evidence_log and individual Athena query receipts.
+  Its plan still computes minimum billing and calls that worst-case Athena cost.
+- Exact scenario assertion is recommended. Prefix matching can select extra
+  future IDs; current GRADERS (agent/evaluation.py blob
+  11e7a67a681742aa9b259fe1914d0ebe9b0de91b) contains only the six proposed
+  scenario IDs and does NOT register S10. No current S10 selection defect
+  established. Use full registered IDs or assert the selected six explicitly.
+
+Lakshmi owns corrections and model-free guard tests. The conditional paid batch
+must not start until the approved guard requirements are verified. Local/in-flight
+fixes may already differ from these published versions; request updated immutable
+commit and exact command before judging the final run. No new tests claimed here.
+
+Sent targeted preflight findings in existing approval thread:
+https://awsusers.slack.com/archives/D0C78HS1Z50/p1791570422540469
+No new permission, paid execution, teammate-branch mutation or merge.
+At this checkpoint no new Maxime handoff appeared in the latest S04 channel.
