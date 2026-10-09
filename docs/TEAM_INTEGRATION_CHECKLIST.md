@@ -1,6 +1,43 @@
 # Team Integration Checklist
 
-Internal finish: October 8, 2026, 11:59 a.m. Pacific
+## Current status — October 9, 2026, 11:28 AM Pacific
+
+- Data foundation: five uploaded Parquet objects and five Glue tables verified.
+  Console access confirmed by Lakshmi; temporary CLI/boto3 sign-in is teammate-
+  reported successful. No permanent access keys were created for this work.
+- Athena tool parity: published evidence contains 13/13 equal normalized
+  DuckDB/Athena comparisons. AWS independently confirms the 11 recorded queries
+  succeeded: 636,489 scanned bytes and 5,175 engine ms. Local elapsed 98.3 s
+  and USD0.000525 query cost are reported/estimated, not an invoice or local
+  independent replay. Preserve the existing file; no parity rerun is needed.
+- Approval timing exception: parity query timestamps are October 9 morning,
+  outside the prior October 8 expiry. No renewal is established; reconcile
+  separately without invalidating the technical evidence or claiming approval.
+- Bedrock: one six-scenario batch (S1/S2/S3/S4/S5/S7, one trial each) approved
+  with USD0.75 total incremental ceiling, ending after one batch or October 9,
+  11:59 PM Pacific. S1 first; stop on unexpected failure. This is conditional
+  on verified code guards before execution, not a service-enforced dollar cap.
+- MUST FIX before live batch: next-call token/cost reservation, global finite
+  model attempt accounting including retries, stop on graded failures, and
+  per-run raw evidence_log plus individual query receipts in saved JSON.
+  Existing published evaluator does not yet prove these conditions.
+  Lakshmi owns her corrections; no source changes made on her branch.
+- Nova Micro US profile is ACTIVE; scoped IAM simulation permits the requested
+  invocation actions and all three destination models. Live invocation is
+  untested; do not expand permissions without an actual scoped denial/approval.
+- Maxime: renderer callable, immutable handoff commit, report tests and final
+  instructions still need receipt/review. Existing output-layer ownership is
+  confirmed; do not duplicate or override in-flight implementation.
+- Franklyn: review guards/real captures, reconcile verifier/confidence policy,
+  bind reviewed renderer, accept complete/partial/error demonstrations, and
+  follow team review/merge/submission gates. Full submission remains NO-GO.
+
+Authoritative details and source blobs:
+docs/WELL_ARCHITECTED_REVIEW_2026-10-08.md.
+Previous dated checkpoints are historical, not current-state assertions.
+
+Original internal finish target (missed): October 8, 2026, 11:59 a.m. Pacific
+Working submission cutoff: October 11, 2026, 11:59 a.m. Pacific
 
 Franklyn's runner/verifier work is intended to be integration-ready before team inputs arrive.
 
@@ -56,9 +93,10 @@ Still provide:
 - representative partial/error envelopes;
 - real Olist/Athena outputs for acceptance.
 
-AWS console profile and narrow permission repair were completed; successful
-teammate sign-in/reset, SDK authentication and service smoke tests remain
-unconfirmed. No credentials belong in fixtures, Git or group messages.
+AWS console/profile repairs and temporary local-login permissions were completed.
+Lakshmi confirmed console and CLI/boto3 access; Athena parity is independently
+cross-checked against published captures and AWS execution metadata. Bedrock
+live acceptance remains pending conditional guard verification. No credentials belong in fixtures, Git or group messages.
 
 Finalized metric semantics are now canonical in `docs/METRIC_CONTRACT.md`.
 
@@ -140,7 +178,7 @@ acceptance of the newer expanded coordination proposal is not assumed. Lakshmi's
 October 7 report confirms her data/agent work and pending AWS integration.
 No new teammate acknowledgement of today's handoff is established.
 
-## Current checkpoint — October 8 afternoon
+## October 8 afternoon checkpoint — historical
 
 Five Parquet objects are verified present in the agreed source/fixtures prefixes;
 this supersedes the earlier empty-bucket observation. Glue s04_wbr still returns
