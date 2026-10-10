@@ -1,0 +1,82 @@
+{
+  "authorization": "Franklyn explicitly requested giving Lakshmi permissions on 2026-10-07 PT",
+  "status": "success",
+  "stdout": "",
+  "return_value": {
+    "user": "aws-hackathon-s04-lakshmi",
+    "policy_name": "S04-WBR-Lakshmi-AccessRepair-20261007",
+    "applied": true,
+    "readback_verified": true,
+    "document": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "S04NovaMicroExactProfileAndDestinations",
+          "Effect": "Allow",
+          "Action": [
+            "bedrock:InvokeModel",
+            "bedrock:InvokeModelWithResponseStream"
+          ],
+          "Resource": [
+            "arn:aws:bedrock:us-east-2:704554708405:inference-profile/us.amazon.nova-micro-v1:0",
+            "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-micro-v1:0",
+            "arn:aws:bedrock:us-east-2::foundation-model/amazon.nova-micro-v1:0",
+            "arn:aws:bedrock:us-west-2::foundation-model/amazon.nova-micro-v1:0"
+          ]
+        },
+        {
+          "Sid": "S04LakshmiOwnPasswordChange",
+          "Effect": "Allow",
+          "Action": "iam:ChangePassword",
+          "Resource": "arn:aws:iam::704554708405:user/aws-hackathon-s04-lakshmi"
+        },
+        {
+          "Sid": "S04PasswordPolicyRead",
+          "Effect": "Allow",
+          "Action": "iam:GetAccountPasswordPolicy",
+          "Resource": "*"
+        }
+      ]
+    },
+    "console_password_created": false,
+    "model_invocations": 0
+  },
+  "api_calls": [
+    {
+      "service": "sts",
+      "operation": "GetCallerIdentity",
+      "status": "success"
+    },
+    {
+      "service": "iam",
+      "operation": "GetUser",
+      "status": "success"
+    },
+    {
+      "service": "bedrock",
+      "operation": "GetInferenceProfile",
+      "status": "success",
+      "n_items": {
+        "models": 3
+      }
+    },
+    {
+      "service": "iam",
+      "operation": "ListUserPolicies",
+      "status": "success",
+      "n_items": {
+        "PolicyNames": 0
+      }
+    },
+    {
+      "service": "iam",
+      "operation": "PutUserPolicy",
+      "status": "success"
+    },
+    {
+      "service": "iam",
+      "operation": "GetUserPolicy",
+      "status": "success"
+    }
+  ]
+}

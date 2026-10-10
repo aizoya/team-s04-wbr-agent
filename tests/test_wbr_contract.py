@@ -63,6 +63,22 @@ class WBRContractTests(unittest.TestCase):
         guard_noncausal("Revenue and review score both declined; this report does not establish a causal relationship.")
         guard_noncausal("Could lower review scores have contributed to the revenue change?")
 
+    def test_disclaimer_cannot_exempt_another_causal_assertion(self):
+        with self.assertRaises(ContractError):
+            guard_noncausal("This report does not establish every cause. Revenue fell because reviews fell.")
+
+    def test_question_mark_cannot_exempt_causal_assertion(self):
+        with self.assertRaises(ContractError):
+            guard_noncausal("Revenue fell because reviews fell. Agree?")
+
+    def test_question_with_causal_wording_is_conservatively_reviewed(self):
+        with self.assertRaises(ContractError):
+            guard_noncausal("Did revenue fall because reviews fell?")
+
+    def test_drove_is_causal_language(self):
+        with self.assertRaises(ContractError):
+            guard_noncausal("Lower reviews drove the revenue decline.")
+
     def test_failure_produces_partial(self):
         metrics = [
             Metric("revenue", 800.0, evidence_ref="athena:q-revenue"),
@@ -137,3 +153,4 @@ class WBRContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

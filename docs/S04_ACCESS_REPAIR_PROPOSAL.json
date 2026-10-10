@@ -1,0 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S04NovaMicroExactProfileAndDestinations",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+      "Resource": [
+        "arn:aws:bedrock:us-east-2:704554708405:inference-profile/us.amazon.nova-micro-v1:0",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-micro-v1:0",
+        "arn:aws:bedrock:us-east-2::foundation-model/amazon.nova-micro-v1:0",
+        "arn:aws:bedrock:us-west-2::foundation-model/amazon.nova-micro-v1:0"
+      ]
+    },
+    {
+      "Sid": "S04LakshmiOwnPasswordChange",
+      "Effect": "Allow",
+      "Action": "iam:ChangePassword",
+      "Resource": "arn:aws:iam::704554708405:user/aws-hackathon-s04-lakshmi"
+    },
+    {
+      "Sid": "S04PasswordPolicyRead",
+      "Effect": "Allow",
+      "Action": "iam:GetAccountPasswordPolicy",
+      "Resource": "*"
+    }
+  ]
+}
