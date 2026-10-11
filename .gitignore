@@ -32,8 +32,15 @@ data/source/
 *.avro
 *.orc
 athena-results/
-
+data/export/
 # Local artifacts
 coverage/
 dist/
 build/
+# Local DuckDB database files (contain Olist data; must not be committed)
+*.duckdb
+*.duckdb.wal
+
+# Generated offline report previews
+/demo/review/
+
