@@ -63,12 +63,16 @@ def grade_s2(out, key):
     state = key["expected"]["state_with_review_drop"]
     claims = [c for c in _claims(out["report_draft"]) if mentions(c["statement"], state)]
     review = [c for c in claims if c["question_id"] == "Q2"]
-    pattern = [c for c in claims if c["claim_type"] == "observed_pattern"]
+    # A separate section's pattern cannot satisfy the Q2 review outcome.
+    pattern = [c for c in review if c["claim_type"] == "observed_pattern"]
     causal = [i for i in _issues(out["report_draft"], {c["claim_id"] for c in claims})
               if i["issue"] == "causal_language"]
     return _result({
         f"a Q2 claim names {state}": bool(review),
         "the link is an observed_pattern": bool(pattern),
+        "Q2 claims cite valid evidence": bool(pattern) and not _issues(
+            out["report_draft"], {c["claim_id"] for c in _claims(out["report_draft"])
+                                  if c["question_id"] == "Q2"}),
         "no causal wording": not causal,
     })
 
